@@ -59,6 +59,11 @@ void InitApp(int32 argc, char** argv, AppInitFlags flags)
     std::call_once(once, [&first_call] { first_call = true; });
     FO_STRONG_ASSERT(first_call);
 
+#if FO_ANDROID
+    // Android uses packaged assets and a headless/null renderer by default during bring-up
+    ForcePackaged();
+#endif
+
     // Fork the process if requested
     if (argc > 0 && std::any_of(argv, argv + argc, [](const char* arg) { return string_view(arg) == "--fork"; })) {
         Platform::ForkProcess();
@@ -82,6 +87,14 @@ void InitApp(int32 argc, char** argv, AppInitFlags flags)
     // Load settings
     auto settings = LoadSettings(argc, argv);
     WriteLog("Version {}", settings.GameVersion);
+
+#if FO_ANDROID
+    // Prefer a null renderer on Android while platform bootstrap is in progress
+    settings.NullRenderer = true;
+    settings.Fullscreen = true;
+    settings.WindowCentered = true;
+    settings.HideNativeCursor = true;
+#endif
 
     // Prebake resources
     if (!IsPackaged() && IsEnumSet(flags, AppInitFlags::PrebakeResources)) {

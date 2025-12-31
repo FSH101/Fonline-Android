@@ -7,6 +7,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Build SDL3 from the bundled third-party sources for Android
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_TEST OFF CACHE BOOL "" FORCE)
+
 # Our JNI / ANativeWindow bridge (already works).
 add_library(native_bridge SHARED
         native_bridge.cpp)
@@ -21,7 +26,8 @@ target_link_libraries(native_bridge
         ${log-lib}
         ${android-lib}
         ${egl-lib}
-        ${glesv2-lib})
+        ${glesv2-lib}
+        SDL3::SDL3-static)
 
 # ============================================================
 # FOnline engine integration (first compile attempt)
@@ -30,6 +36,8 @@ target_link_libraries(native_bridge
 # <repo_root>/engine_src/fonline-master/Source/...
 set(PROJ_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../..")
 set(ENGINE_DIR "${PROJ_ROOT}/engine_src/fonline-master")
+
+add_subdirectory("${ENGINE_DIR}/ThirdParty/SDL" "${CMAKE_CURRENT_BINARY_DIR}/sdl-build")
 
 option(FONLINE_WITH_ENGINE "Try to build FOnline engine sources" ON)
 
@@ -191,7 +199,8 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_HAVE_ACM=0
             FO_HAVE_THEORA=$<BOOL:${FO_ENABLE_THEORA}>
             FO_ENABLE_SOUND=0
-            FO_GEOMETRY=${FO_GEOMETRY_MODE})
+            FO_GEOMETRY=${FO_GEOMETRY_MODE}
+            SDL_MAIN_HANDLED=1)
 
     target_compile_definitions(fonline_engine PUBLIC ${ANDROID_ENGINE_COMMON_DEFS})
 
@@ -204,7 +213,8 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             ${log-lib}
             ${android-lib}
             ${egl-lib}
-            ${glesv2-lib})
+            ${glesv2-lib}
+            SDL3::SDL3-static)
 
     # Link engine into our JNI bridge so it ends up in the .apk.
     target_link_libraries(native_bridge fonline_engine)

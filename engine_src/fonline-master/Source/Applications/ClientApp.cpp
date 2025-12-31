@@ -177,3 +177,53 @@ int main(int argc, char** argv) // Handled by SDL
         FO_UNKNOWN_EXCEPTION();
     }
 }
+
+#if FO_ANDROID
+extern "C" bool AndroidClientInit()
+{
+    FO_STACK_TRACE_ENTRY();
+
+    try {
+        static const char* argv0 = "fonline_android";
+        char* argv[] = {const_cast<char*>(argv0)};
+
+        WriteLog("InitApp (Android)");
+        InitApp(1, argv, CombineEnum(AppInitFlags::ClientMode, AppInitFlags::ShowMessageOnException, AppInitFlags::PrebakeResources));
+        WriteLog("Android InitApp OK");
+        return true;
+    }
+    catch (const std::exception& ex) {
+        ReportExceptionAndExit(ex);
+    }
+    catch (...) {
+        FO_UNKNOWN_EXCEPTION();
+    }
+
+    return false;
+}
+
+extern "C" void AndroidClientFrame()
+{
+    FO_STACK_TRACE_ENTRY();
+
+    MainEntry(nullptr);
+}
+
+extern "C" void AndroidClientShutdown()
+{
+    FO_STACK_TRACE_ENTRY();
+
+    try {
+        WriteLog("Android shutdown");
+        Data->ResourceUpdater.reset();
+        Data->Client.reset();
+        ExitApp(true);
+    }
+    catch (const std::exception& ex) {
+        ReportExceptionAndExit(ex);
+    }
+    catch (...) {
+        FO_UNKNOWN_EXCEPTION();
+    }
+}
+#endif
