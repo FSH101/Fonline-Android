@@ -187,11 +187,11 @@ RenderEffect::RenderEffect(EffectUsage usage, string_view name, const RenderEffe
 
     const auto passes = fofx.GetAsInt("Effect", "Passes", 1);
     FO_RUNTIME_ASSERT(passes >= 1);
-    FO_RUNTIME_ASSERT(passes <= const_numeric_cast<int32>(EFFECT_MAX_PASSES));
+    FO_RUNTIME_ASSERT(passes <= static_cast<int32>(EFFECT_MAX_PASSES));
 
 #if FO_ENABLE_3D
     const auto shadow_pass = fofx.GetAsInt("Effect", "ShadowPass", -1);
-    FO_RUNTIME_ASSERT(shadow_pass == -1 || (shadow_pass >= 1 && shadow_pass <= const_numeric_cast<int32>(EFFECT_MAX_PASSES)));
+    FO_RUNTIME_ASSERT(shadow_pass == -1 || (shadow_pass >= 1 && shadow_pass <= static_cast<int32>(EFFECT_MAX_PASSES)));
     if (shadow_pass != -1) {
         _isShadow[shadow_pass - 1] = true;
     }

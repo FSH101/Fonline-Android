@@ -41,6 +41,7 @@ set(ENGINE_DIR "${PROJ_ROOT}/engine_src/fonline-master")
 add_subdirectory("${ENGINE_DIR}/ThirdParty/SDL" "${CMAKE_CURRENT_BINARY_DIR}/sdl-build")
 
 option(FONLINE_WITH_ENGINE "Try to build FOnline engine sources" ON)
+option(FO_ENABLE_SCRIPTING "Enable AngelScript scripting" OFF)
 
 if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     message(STATUS "FOnline engine found at: ${ENGINE_DIR}")
@@ -56,8 +57,12 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Tests?/")         # Test / Tests
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Tools?/")         # Tool / Tools
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/ThirdParty/")            # If Source accidentally includes it
-    list(FILTER ENGINE_SRC EXCLUDE REGEX "Rendering-Direct3D\.cpp$")
-    list(FILTER ENGINE_SRC EXCLUDE REGEX "WinApi-.*\.cpp$")
+    list(FILTER ENGINE_SRC EXCLUDE REGEX "Rendering-Direct3D\\.cpp$")
+    list(FILTER ENGINE_SRC EXCLUDE REGEX "WinApi-.*\\.cpp$")
+
+    if(NOT FO_ENABLE_SCRIPTING)
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Scripting/")
+    endif()
 
     add_library(fonline_engine STATIC ${ENGINE_SRC})
 
@@ -198,8 +203,9 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_HAVE_ASSIMP=0
             FO_HAVE_SPARK=0
             FO_HAVE_ACM=0
-            FO_HAVE_THEORA=$<BOOL:${FO_ENABLE_THEORA}>
+            FO_HAVE_THEORA=0
             FO_ENABLE_SOUND=0
+            FO_ENABLE_SCRIPTING=$<BOOL:${FO_ENABLE_SCRIPTING}>
             FO_GEOMETRY=${FO_GEOMETRY_MODE}
             SDL_MAIN_HANDLED=1)
 

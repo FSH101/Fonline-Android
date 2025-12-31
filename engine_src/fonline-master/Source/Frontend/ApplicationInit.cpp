@@ -93,7 +93,6 @@ void InitApp(int32 argc, char** argv, AppInitFlags flags)
     settings.NullRenderer = true;
     settings.Fullscreen = true;
     settings.WindowCentered = true;
-    settings.HideNativeCursor = true;
 #endif
 
     // Prebake resources
