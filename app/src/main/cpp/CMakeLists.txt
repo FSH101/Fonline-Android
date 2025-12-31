@@ -149,10 +149,11 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             __ANDROID__=1
             ANDROID=1
             FO_ANDROID=1
-            FO_WINDOWS=0)
+            FO_WINDOWS=0
+            FO_HAVE_ASSIMP=0)
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
-    target_compile_options(fonline_engine PRIVATE -fexceptions -frtti)
+    target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)
 
     target_link_libraries(fonline_engine
             ${log-lib}

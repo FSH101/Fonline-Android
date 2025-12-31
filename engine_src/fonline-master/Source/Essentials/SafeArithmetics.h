@@ -60,129 +60,77 @@ template<typename T>
 FO_DECLARE_EXCEPTION(OverflowException);
 FO_DECLARE_EXCEPTION(DivisionByZeroException);
 
-template<typename T, typename U>
-    requires(std::is_arithmetic_v<T> && std::is_arithmetic_v<U>)
-[[nodiscard]] constexpr auto numeric_cast(U value) -> T
+namespace detail
 {
-    static_assert(!std::same_as<T, bool> && !std::same_as<U, bool>, "Bool type is not convertible");
+    template<typename T>
+    using numeric_base = std::conditional_t<std::is_enum_v<T>, std::underlying_type_t<T>, T>;
 
-    if constexpr (std::floating_point<T> || std::floating_point<U>) {
-        static_assert(std::floating_point<T>, "Use iround for float to int conversion");
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_unsigned_v<U> && sizeof(T) >= sizeof(U)) {
-        // Always fit
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_unsigned_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            throw OverflowException("Numeric cast overflow", typeid(U).name(), typeid(T).name(), value, std::numeric_limits<T>::max());
+    template<typename T, typename U>
+        requires(std::is_arithmetic_v<numeric_base<T>> && std::is_arithmetic_v<numeric_base<U>>)
+    [[nodiscard]] constexpr auto cast_with_range(U value) -> T
+    {
+        using To = numeric_base<T>;
+        using From = numeric_base<U>;
+
+        static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
+
+        if constexpr (std::floating_point<To> || std::floating_point<From>) {
+            static_assert(std::floating_point<To>, "Use iround for float to int conversion");
         }
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_signed_v<U> && sizeof(T) >= sizeof(U)) {
-        // Always fit
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_signed_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            throw OverflowException("Numeric cast overflow", typeid(U).name(), typeid(T).name(), value, std::numeric_limits<T>::max());
+
+        using Common = std::common_type_t<To, From>;
+        constexpr auto target_min = static_cast<Common>(std::numeric_limits<To>::lowest());
+        constexpr auto target_max = static_cast<Common>(std::numeric_limits<To>::max());
+        const auto common_value = static_cast<Common>(value);
+
+        if (common_value < target_min || common_value > target_max) {
+            throw OverflowException("Numeric cast overflow", typeid(U).name(), typeid(T).name(), common_value, target_max);
         }
-        if (value < static_cast<U>(std::numeric_limits<T>::min())) {
-            throw OverflowException("Numeric cast underflow", typeid(U).name(), typeid(T).name(), value, std::numeric_limits<T>::min());
-        }
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_signed_v<U> && sizeof(T) >= sizeof(U)) {
-        if (value < 0) {
-            throw OverflowException("Numeric cast underflow", typeid(U).name(), typeid(T).name(), value, 0);
-        }
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_signed_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            throw OverflowException("Numeric cast overflow", typeid(U).name(), typeid(T).name(), value, std::numeric_limits<T>::max());
-        }
-        if (value < 0) {
-            throw OverflowException("Numeric cast underflow", typeid(U).name(), typeid(T).name(), value, 0);
-        }
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) == sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            throw OverflowException("Numeric cast overflow", typeid(U).name(), typeid(T).name(), value, std::numeric_limits<T>::max());
-        }
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) > sizeof(U)) {
-        // Always fit
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            throw OverflowException("Numeric cast overflow", typeid(U).name(), typeid(T).name(), value, std::numeric_limits<T>::max());
-        }
-    }
-    else {
-        static_assert(false);
+
+        return static_cast<T>(static_cast<To>(common_value));
     }
 
-    return static_cast<T>(value);
+    template<typename T, typename U>
+        requires(std::is_arithmetic_v<numeric_base<T>> && std::is_arithmetic_v<numeric_base<U>>)
+    [[nodiscard]] constexpr auto clamp_with_range(U value) noexcept -> T
+    {
+        using To = numeric_base<T>;
+        using From = numeric_base<U>;
+
+        static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
+
+        if constexpr (std::floating_point<To> || std::floating_point<From>) {
+            static_assert(std::floating_point<To>, "Use iround for float to int conversion");
+        }
+
+        using Common = std::common_type_t<To, From>;
+        constexpr auto target_min = static_cast<Common>(std::numeric_limits<To>::lowest());
+        constexpr auto target_max = static_cast<Common>(std::numeric_limits<To>::max());
+
+        auto common_value = static_cast<Common>(value);
+        if (common_value < target_min) {
+            common_value = target_min;
+        }
+        else if (common_value > target_max) {
+            common_value = target_max;
+        }
+
+        return static_cast<T>(static_cast<To>(common_value));
+    }
 }
 
 template<typename T, typename U>
-    requires(std::is_arithmetic_v<T> && std::is_arithmetic_v<U>)
+    requires(std::is_arithmetic_v<detail::numeric_base<T>> && std::is_arithmetic_v<detail::numeric_base<U>>)
+[[nodiscard]] constexpr auto numeric_cast(U value) -> T
+{
+    return detail::cast_with_range<T>(value);
+}
+
+template<typename T, typename U>
+    requires(std::is_arithmetic_v<detail::numeric_base<T>> && std::is_arithmetic_v<detail::numeric_base<U>>)
 [[nodiscard]] constexpr auto safe_numeric_cast(U value) noexcept -> T
 {
-    static_assert(!std::same_as<T, bool> && !std::same_as<U, bool>, "Bool type is not convertible");
-
-    if constexpr (std::floating_point<T> || std::floating_point<U>) {
-        static_assert(std::floating_point<T>, "Use iround for float to int conversion");
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_unsigned_v<U> && sizeof(T) >= sizeof(U)) {
-        // Always fit
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_unsigned_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            value = static_cast<U>(std::numeric_limits<T>::max());
-        }
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_signed_v<U> && sizeof(T) >= sizeof(U)) {
-        // Always fit
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_signed_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            value = static_cast<U>(std::numeric_limits<T>::max());
-        }
-        if (value < static_cast<U>(std::numeric_limits<T>::min())) {
-            value = static_cast<U>(std::numeric_limits<T>::min());
-        }
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_signed_v<U> && sizeof(T) >= sizeof(U)) {
-        if (value < 0) {
-            value = 0;
-        }
-        else if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            value = static_cast<U>(std::numeric_limits<T>::max());
-        }
-    }
-    else if constexpr (std::is_unsigned_v<T> && std::is_signed_v<U> && sizeof(T) < sizeof(U)) {
-        if (value < 0) {
-            value = 0;
-        }
-        else if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            value = static_cast<U>(std::numeric_limits<T>::max());
-        }
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) == sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            value = static_cast<U>(std::numeric_limits<T>::max());
-        }
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) > sizeof(U)) {
-        // Always fit
-    }
-    else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) < sizeof(U)) {
-        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
-            value = static_cast<U>(std::numeric_limits<T>::max());
-        }
-    }
-    else {
-        static_assert(false);
-    }
-
-    return static_cast<T>(value);
+    return detail::clamp_with_range<T>(value);
 }
 
 template<typename T, typename U>

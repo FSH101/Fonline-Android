@@ -33,3 +33,9 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ## Notes
 - `local.properties` is intentionally git-ignored; Android Studio will regenerate it with your local SDK/NDK paths.
 - If you enable additional ABIs or change toolchain versions, keep them in sync with the values in `app/build.gradle.kts` to avoid mismatch errors.
+
+## Fixes (codex/restore-proper-formatting-for-codes)
+- Safe arithmetic templates now normalize enum/unsigned/signed conversions instead of tripping static assertions during Android builds.
+- Assimp headers are optional on Android: when `FO_HAVE_ASSIMP=0`, lightweight math stubs (`AssimpStubs.h`) provide the required matrix/vector/quaternion types so the client sources still compile.
+- Android CMake adds clearer template diagnostics (`-ftemplate-backtrace-limit=0`, `-ferror-limit=5`) to surface the first failing instantiation when troubleshooting.
+- Build with `./gradlew clean :app:assembleDebug` (or `gradlew.bat` on Windows); ABIs listed in `abiFilters` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) are wired for the native build.

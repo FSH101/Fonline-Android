@@ -96,9 +96,19 @@ struct fo_fmt::formatter<FO_NAMESPACE any_t> : fo_fmt::formatter<FO_NAMESPACE st
 FO_BEGIN_NAMESPACE();
 
 // 3d math types
-// Todo: replace depedency from Assimp types (matrix/vector/quaternion/color)
+// Todo: replace dependency from Assimp types (matrix/vector/quaternion/color)
 FO_END_NAMESPACE();
-#include "assimp/types.h"
+
+#ifndef FO_HAVE_ASSIMP
+#define FO_HAVE_ASSIMP 1
+#endif
+
+#if FO_HAVE_ASSIMP
+#    include "assimp/types.h"
+#else
+#    include "AssimpStubs.h"
+#endif
+
 FO_BEGIN_NAMESPACE();
 using vec3 = aiVector3t<float32>;
 using dvec3 = aiVector3t<float64>;
