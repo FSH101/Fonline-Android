@@ -73,29 +73,38 @@ namespace detail
     template<typename...>
     inline constexpr bool dependent_false_v = false;
 
-    template<typename T, bool IsEnum = std::is_enum_v<std::remove_cvref_t<T>>>
-    struct underlying_or_self
+    template<typename T, typename Enable = void>
+    struct numeric_value
     {
-        using type = std::remove_cvref_t<T>;
+        using type = void;
+        static constexpr bool valid = false;
     };
 
     template<typename T>
-    struct underlying_or_self<T, true>
+    struct numeric_value<T, std::enable_if_t<std::is_enum_v<std::remove_cvref_t<T>>>>
     {
         using type = std::underlying_type_t<std::remove_cvref_t<T>>;
+        static constexpr bool valid = std::is_arithmetic_v<type>;
     };
 
     template<typename T>
-    using underlying_or_self_t = typename underlying_or_self<T>::type;
+    struct numeric_value<T, std::enable_if_t<std::is_arithmetic_v<std::remove_cvref_t<T>>>>
+    {
+        using type = std::remove_cvref_t<T>;
+        static constexpr bool valid = true;
+    };
 
     template<typename T>
-    concept numeric_like = std::is_arithmetic_v<underlying_or_self_t<T>>;
+    using numeric_value_t = typename numeric_value<T>::type;
+
+    template<typename T>
+    concept numeric_like = numeric_value<T>::valid;
 
     template<numeric_like T, numeric_like U>
     [[nodiscard]] constexpr auto cast_with_range(U value) -> T
     {
-        using To = underlying_or_self_t<T>;
-        using From = underlying_or_self_t<U>;
+        using To = numeric_value_t<T>;
+        using From = numeric_value_t<U>;
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
@@ -120,8 +129,8 @@ namespace detail
     template<numeric_like T, numeric_like U>
     [[nodiscard]] constexpr auto clamp_with_range(U value) noexcept -> T
     {
-        using To = underlying_or_self_t<T>;
-        using From = underlying_or_self_t<U>;
+        using To = numeric_value_t<T>;
+        using From = numeric_value_t<U>;
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
