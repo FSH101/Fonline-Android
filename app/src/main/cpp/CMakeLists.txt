@@ -138,6 +138,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/Client"
             "${ENGINE_DIR}/Source/Server"
             "${ENGINE_DIR}/Source/Frontend"
+            "${ENGINE_DIR}/Source/Frontend/Applications"
             "${ENGINE_DIR}/Source/Generated"
             # ankerl::unordered_dense is now stored under ThirdParty/ankerl
             "${ENGINE_DIR}/ThirdParty"
@@ -155,6 +156,8 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_SAFE_ARITH_RELAXED=1
             FO_GEOMETRY=2
             FO_HAVE_ASSIMP=0)
+
+    target_compile_definitions(native_bridge PRIVATE FO_GEOMETRY=2)
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
     target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)

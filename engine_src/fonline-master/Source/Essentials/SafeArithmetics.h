@@ -73,30 +73,30 @@ namespace detail
     template<typename...>
     inline constexpr bool dependent_false_v = false;
 
-    template<typename T, bool IsEnum = std::is_enum_v<std::remove_cvref_t<T>>>
-    struct underlying_or_self
+    template<typename T>
+    struct numeric_base
     {
         using type = std::remove_cvref_t<T>;
     };
 
     template<typename T>
-    struct underlying_or_self<T, true>
+        requires std::is_enum_v<std::remove_cvref_t<T>>
+    struct numeric_base<T>
     {
         using type = std::underlying_type_t<std::remove_cvref_t<T>>;
     };
 
     template<typename T>
-    using underlying_or_self_t = typename underlying_or_self<T>::type;
+    using numeric_base_t = typename numeric_base<T>::type;
 
     template<typename T>
-    using numeric_base = underlying_or_self_t<T>;
+    concept numeric_like = std::is_arithmetic_v<numeric_base_t<T>>;
 
-    template<typename T, typename U>
-        requires(std::is_arithmetic_v<numeric_base<T>> && std::is_arithmetic_v<numeric_base<U>>)
+    template<numeric_like T, numeric_like U>
     [[nodiscard]] constexpr auto cast_with_range(U value) -> T
     {
-        using To = numeric_base<T>;
-        using From = numeric_base<U>;
+        using To = numeric_base_t<T>;
+        using From = numeric_base_t<U>;
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
@@ -118,12 +118,11 @@ namespace detail
         return static_cast<T>(static_cast<To>(common_value));
     }
 
-    template<typename T, typename U>
-        requires(std::is_arithmetic_v<numeric_base<T>> && std::is_arithmetic_v<numeric_base<U>>)
+    template<numeric_like T, numeric_like U>
     [[nodiscard]] constexpr auto clamp_with_range(U value) noexcept -> T
     {
-        using To = numeric_base<T>;
-        using From = numeric_base<U>;
+        using To = numeric_base_t<T>;
+        using From = numeric_base_t<U>;
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
@@ -149,15 +148,13 @@ namespace detail
     }
 }
 
-template<typename T, typename U>
-    requires(std::is_arithmetic_v<detail::numeric_base<T>> && std::is_arithmetic_v<detail::numeric_base<U>>)
+template<detail::numeric_like T, detail::numeric_like U>
 [[nodiscard]] constexpr auto numeric_cast(U value) -> T
 {
     return detail::cast_with_range<T>(value);
 }
 
-template<typename T, typename U>
-    requires(std::is_arithmetic_v<detail::numeric_base<T>> && std::is_arithmetic_v<detail::numeric_base<U>>)
+template<detail::numeric_like T, detail::numeric_like U>
 [[nodiscard]] constexpr auto safe_numeric_cast(U value) noexcept -> T
 {
     return detail::clamp_with_range<T>(value);
