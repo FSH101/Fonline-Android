@@ -54,9 +54,10 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ### Fixes (Android/NDK build)
 - **Missing `acmstrm.h` (SoundManager.cpp:38)**: Android builds no longer include the Windows-only ACM header; a dedicated stub lives in `Source/Client/Compat/AcmStrmStub.h` and activates when `FO_HAVE_ACM=0`/`FO_ANDROID=1`, while Windows continues to include the real header. Default file extensions also prefer `ogg` on platforms without ACM support.
 - **Undeclared `FO_DEBUG` (`MapView.cpp` `if constexpr`)**: `app/src/main/cpp/CMakeLists.txt` now sets `FO_DEBUG=1` for Debug and `FO_DEBUG=0` otherwise so the compile-time branches instantiate cleanly; `Common/Common.h` still provides a fallback when the compile definition is missing.
-- **Changed files**: `Source/Client/SoundManager.cpp`, `Source/Client/Compat/AcmStrmStub.h`, `README.md`.
+- **Feature flags applied to all Android targets**: both `fonline_engine` and `native_bridge` now receive `FO_ANDROID=1`, `FO_WINDOWS=0`, the per-config `FO_DEBUG` define, and Android-default gates for Spark/ACM/sound so the compile commands consistently skip missing Windows-only headers and SPARK dependencies.
+- **Changed files**: `app/src/main/cpp/CMakeLists.txt`, `Source/Client/SoundManager.cpp`, `Source/Client/Compat/AcmStrmStub.h`, `README.md`.
 - **How to build**: `./gradlew.bat clean :app:assembleDebug --stacktrace --info 2>&1 | Tee-Object -FilePath build_log.txt` (or `./gradlew` on *nix). This should push the NDK task past the missing-header and `FO_DEBUG` errors; the next failure, if any, will be unrelated to these fixes.
-- **Flags/defines**: `FO_ANDROID`/`FO_WINDOWS` are set in CMake; `FO_DEBUG` uses generator expressions per configuration; audio gates use `FO_HAVE_ACM` and `FO_ENABLE_SOUND` with Android defaults of `0`.
+- **Flags/defines**: `FO_ANDROID`/`FO_WINDOWS` are set in CMake for every Android target; `FO_DEBUG` uses generator expressions per configuration; audio gates use `FO_HAVE_ACM` and `FO_ENABLE_SOUND` with Android defaults of `0`; Spark uses `FO_HAVE_SPARK=0` by default on Android.
 
 ### Known limitations / временные заглушки
 - Gradle distribution download is blocked in this container; verify on a Windows host or CI with network access to ensure there are no further C++/linker errors beyond the fixed include/trait issues.
@@ -75,6 +76,9 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ### Fix log (2025-05-22)
 - Added `FO_DEBUG` compile-time definitions for Debug/Release and a defensive fallback in `Common/Common.h` so `if constexpr (FO_DEBUG)` blocks compile on Android. (`app/src/main/cpp/CMakeLists.txt`, `Source/Common/Common.h`)
 - Introduced feature flags for Spark and audio subsystems (`FO_HAVE_SPARK=0`, `FO_HAVE_ACM=0`, `FO_ENABLE_SOUND=0`) with stub implementations for Spark rendering and SoundManager to keep Android builds progressing without `SPARK.h` or `acmstrm.h`. (`Source/Client/SparkExtension.*`, `Source/Client/VisualParticles.*`, `Source/Client/SoundManager.cpp`, `app/src/main/cpp/CMakeLists.txt`, `Source/Common/Common.h`)
+
+### Fix log (2025-05-23)
+- Normalized Android compile definitions so both `fonline_engine` and `native_bridge` see the same `FO_ANDROID=1`, `FO_WINDOWS=0`, and per-configuration `FO_DEBUG` flags along with the Android defaults for Spark/ACM/sound. (`app/src/main/cpp/CMakeLists.txt`)
 
 ### Fix log (2025-05-12)
 - Exposed `FO_GEOMETRY_MODE` in CMake and defined it for both the engine and JNI bridge to ensure `FO_GEOMETRY` is always supplied during Android builds.

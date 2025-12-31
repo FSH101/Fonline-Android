@@ -195,6 +195,10 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     target_compile_definitions(native_bridge PRIVATE
             $<$<CONFIG:Debug>:FO_DEBUG=1>
             $<$<NOT:$<CONFIG:Debug>>:FO_DEBUG=0>
+            __ANDROID__=1
+            ANDROID=1
+            FO_ANDROID=1
+            FO_WINDOWS=0
             FO_GEOMETRY=${FO_GEOMETRY_MODE}
             FO_HAVE_SPARK=0
             FO_HAVE_ACM=0
