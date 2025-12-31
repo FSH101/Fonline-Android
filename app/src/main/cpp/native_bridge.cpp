@@ -17,7 +17,7 @@
 
 #if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
 extern "C" bool AndroidClientInit();
-extern "C" void AndroidClientFrame();
+extern "C" bool AndroidClientFrame();
 extern "C" void AndroidClientShutdown();
 #endif
 
@@ -98,9 +98,11 @@ namespace {
                 }
 
 #if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+                bool keepRunning = true;
+
                 if (gEngineReady.load()) {
                     LOGI("BeginFrame %d", frame);
-                    AndroidClientFrame();
+                    keepRunning = AndroidClientFrame();
                 }
 #endif
 
@@ -157,6 +159,10 @@ namespace {
 #if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
                 if (gEngineReady.load()) {
                     LOGI("EndFrame %d", frame);
+                    if (!keepRunning) {
+                        LOGI("Engine requested quit");
+                        gRunning.store(false);
+                    }
                 }
 #endif
 

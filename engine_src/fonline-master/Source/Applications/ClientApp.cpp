@@ -202,11 +202,13 @@ extern "C" bool AndroidClientInit()
     return false;
 }
 
-extern "C" void AndroidClientFrame()
+extern "C" bool AndroidClientFrame()
 {
     FO_STACK_TRACE_ENTRY();
 
     MainEntry(nullptr);
+
+    return App != nullptr && !App->IsQuitRequested();
 }
 
 extern "C" void AndroidClientShutdown()
