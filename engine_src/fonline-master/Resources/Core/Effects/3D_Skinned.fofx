@@ -1,0 +1,133 @@
+[Effect]
+Passes = 2
+ShadowPass = 1
+
+[ShaderCommon]
+const vec3 LightDir = vec3(0.0, 0.0, 1.0);
+const float LightPower = 0.6;
+const float CameraAngleCos = 0.9010770213221; // cos(25.7)
+const float CameraAngleSin = 0.4336590845875; // sin(25.7)
+const float ShadowAngleTan = 0.2548968037538; // tan(14.3)
+
+[VertexShader Pass2]
+layout(binding = 0, std140) uniform ProjBuf { mat4 ProjectionMatrix; };
+layout(binding = 6, std140) uniform ModelBuf { vec4 LightColor; vec4 GroundPosition; mat4 WorldMatrices[MAX_BONES]; };
+
+layout(location = 0) in vec3 InPosition;
+layout(location = 1) in vec3 InNormal;
+layout(location = 2) in vec2 InTexCoord;
+layout(location = 3) in vec2 InTexCoordBase;
+layout(location = 4) in vec3 InTangent;
+layout(location = 5) in vec3 InBinormal;
+layout(location = 6) in vec4 InBlendWeights;
+layout(location = 7) in vec4 InBlendIndices;
+layout(location = 8) in vec4 InColor;
+
+layout(location = 0) out vec4 Color;
+layout(location = 1) out vec2 TexCoord;
+
+void main(void)
+{
+    // Skinning
+    vec4 weights = InBlendWeights;
+    vec4 indices = InBlendIndices;
+    vec4 position = vec4(0.0);
+    vec3 normal = vec3(0.0);
+    for (int i = 0; i < 4; i++) {
+        float w = weights.x;
+        if (w > 0.0) {
+            mat4 m44 = WorldMatrices[int(indices.x)];
+            mat3 m33 = mat3(m44[0].xyz, m44[1].xyz, m44[2].xyz);
+            position += m44 * vec4(InPosition, 1.0) * w;
+            normal += m33 * InNormal * w;
+        }
+        weights = weights.yzwx;
+        indices = indices.yzwx;
+    }
+    
+    // Position
+    gl_Position = ProjectionMatrix * position;
+    
+    // Normal
+    normal = normalize(normal);
+    
+    // Shade
+    float light = max(LightPower, dot(normal, LightDir));
+    Color = vec4(light, light, light, 1.0);
+    
+    // Pass to fragment shader
+    TexCoord = InTexCoord;
+}
+
+[FragmentShader Pass2]
+layout(binding = 0) uniform sampler2D MainTex;
+
+layout(location = 0) in vec4 Color;
+layout(location = 1) in vec2 TexCoord;
+
+layout(location = 0) out vec4 FragColor;
+
+void main(void)
+{
+    FragColor = texture(MainTex, TexCoord) * Color;
+}
+
+[VertexShader Pass1]
+layout(binding = 0, std140) uniform ProjBuf { mat4 ProjectionMatrix; };
+layout(binding = 6, std140) uniform ModelBuf { vec4 LightColor; vec4 GroundPosition; mat4 WorldMatrices[MAX_BONES]; };
+
+layout(location = 0) in vec3 InPosition;
+layout(location = 1) in vec3 InNormal;
+layout(location = 2) in vec2 InTexCoord;
+layout(location = 3) in vec2 InTexCoordBase;
+layout(location = 4) in vec3 InTangent;
+layout(location = 5) in vec3 InBinormal;
+layout(location = 6) in vec4 InBlendWeights;
+layout(location = 7) in vec4 InBlendIndices;
+layout(location = 8) in vec4 InColor;
+
+layout(location = 0) out vec2 TexCoord;
+
+void main(void)
+{
+    // Skinning
+    vec4 weights = InBlendWeights;
+    vec4 indices = InBlendIndices;
+    vec4 position = vec4(0.0);
+    for (int i = 0; i < 4; i++) {
+        float w = weights.x;
+        if (w > 0.0) {
+            mat4 m44 = WorldMatrices[int(indices.x)];
+            position += m44 * vec4(InPosition, 1.0) * w;
+        }
+        weights = weights.yzwx;
+        indices = indices.yzwx;
+    }
+    
+    // Calculate shadow position
+    float d = (position.y - GroundPosition.y) * CameraAngleCos;
+    d -= (GroundPosition.z - position.z) * CameraAngleSin;
+    position.y -= d * CameraAngleCos;
+    d *= ShadowAngleTan;
+    position.y += d * CameraAngleSin;
+    position.z -= 10.0;
+    
+    // Position
+    gl_Position = ProjectionMatrix * position;
+    
+    // Pass to fragment shader
+    TexCoord = InTexCoord;
+}
+
+[FragmentShader Pass1]
+layout(binding = 0) uniform sampler2D MainTex;
+
+layout(location = 0) in vec2 TexCoord;
+
+layout(location = 0) out vec4 FragColor;
+
+void main(void)
+{
+    FragColor.rgb = vec3(0.0);
+    FragColor.a = texture(MainTex, TexCoord).a;
+}

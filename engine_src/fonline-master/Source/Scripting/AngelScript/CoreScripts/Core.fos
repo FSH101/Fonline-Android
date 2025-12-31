@@ -1,0 +1,38 @@
+namespace Core // Sort -10
+{
+
+// Look checks
+#define LOOK_CHECK_DIR          (0x01) // Nerfe look by directions of look
+#define LOOK_CHECK_SNEAK_DIR    (0x02) // Nerfe opponent sneak by directions of look
+#define LOOK_CHECK_SNEAK_WEIGHT (0x04) // Nerfe sneak by current weight
+#define LOOK_CHECK_TRACE        (0x08) // Tracing for wall aviablility
+#define LOOK_CHECK_SCRIPT       (0x10) // Allow bool check_look(...) in main.fos, all other defines ignored
+#define LOOK_CHECK_ITEM_SCRIPT  (0x20) // Allow bool check_trap_look(...) in main.fos, for items with ITEM_TRAP flag
+#define LOOK_CHECK_TRACE_CLIENT (0x40) // Tracing for wall aviablility (client side)
+
+// Internal server commands
+#define COMMAND_EXIT         (1)
+#define COMMAND_MYINFO       (2)
+#define COMMAND_GAMEINFO     (3)
+#define COMMAND_CRITID       (4)
+#define COMMAND_MOVECRIT     (5)
+#define COMMAND_DISCONCRIT   (7)
+#define COMMAND_TOGLOBAL     (8)
+#define COMMAND_PROPERTY     (10)
+#define COMMAND_ADDITEM      (12)
+#define COMMAND_ADDITEM_SELF (14)
+#define COMMAND_ADDNPC       (15)
+#define COMMAND_ADDLOCATION  (16)
+#define COMMAND_RUNSCRIPT    (20)
+#define COMMAND_REGENMAP     (25)
+#define COMMAND_LOG          (37)
+
+// Client lighting
+#define MAX_LIGHT_VALUE   (10000)
+#define MAX_LIGHT_HEX     (200)
+#define MAX_LIGHT_ALPHA   (255)
+#define LIGHT_DISABLE_DIR #(dir)(1 << Math::Clamp(dir, 0, 7))
+#define LIGHT_GLOBAL      (0x40)
+#define LIGHT_INVERSE     (0x80)
+
+}

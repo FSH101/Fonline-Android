@@ -1,0 +1,54 @@
+[Effect]
+Passes = 2
+BlendFunc_Pass1 = DstColor One
+BlendFunc_Pass2 = DstColor One
+
+[VertexShader]
+layout(binding = 0, std140) uniform ProjBuf { mat4 ProjectionMatrix; };
+
+layout(location = 0) in vec3 InPosition;
+layout(location = 1) in vec4 InColor;
+layout(location = 2) in vec2 InTexCoord;
+layout(location = 3) in vec2 InTexEggCoord;
+
+layout(location = 0) out vec2 TexCoord;
+
+void main(void)
+{
+    gl_Position = ProjectionMatrix * vec4(InPosition.xy, 0.0, 1.0);
+    TexCoord = InTexCoord;
+}
+
+[FragmentShader Pass1]
+layout(binding = 0) uniform sampler2D MainTex;
+
+layout(location = 0) in vec2 TexCoord;
+
+layout(location = 0) out vec4 FragColor;
+
+void main(void)
+{
+    vec4 tex = texture(MainTex, TexCoord);
+    if (tex.a == 0.0) {
+        discard;
+    }
+
+    FragColor = vec4(tex.a, tex.a, tex.a, 1.0);
+}
+
+[FragmentShader Pass2]
+layout(binding = 0) uniform sampler2D MainTex;
+
+layout(location = 0) in vec2 TexCoord;
+
+layout(location = 0) out vec4 FragColor;
+
+void main(void)
+{
+    vec4 tex = texture(MainTex, TexCoord);
+    if (tex.a == 0.0) {
+        discard;
+    }
+    
+    FragColor = vec4(tex.r, tex.g, tex.b, 1.0);
+}

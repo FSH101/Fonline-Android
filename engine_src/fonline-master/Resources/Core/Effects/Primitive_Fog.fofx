@@ -1,0 +1,47 @@
+[Effect]
+BlendFunc = One One
+BlendEquation = Max
+
+[ShaderCommon]
+const float FogBordersPower = 1.8;
+const float FogBlackout = 0.5;
+const float AttackBordersPower = 7.0;
+
+[VertexShader]
+layout(binding = 0, std140) uniform ProjBuf { mat4 ProjectionMatrix; };
+
+layout(location = 0) in vec3 InPosition;
+layout(location = 1) in vec4 InColor;
+layout(location = 2) in vec2 InTexCoord;
+layout(location = 3) in vec2 InTexEggCoord;
+
+layout(location = 0) out vec4 Color;
+
+void main(void)
+{
+    gl_Position = ProjectionMatrix * vec4(InPosition.xy, 0.0, 1.0);
+    Color = InColor;
+}
+
+[FragmentShader]
+layout(location = 0) in vec4 Color;
+
+layout(location = 0) out vec4 FragColor;
+
+void main(void)
+{
+    // Input:
+    // a - fog area or attack area (0.0 or 1.0)
+    // r - actual distance
+    // g - whole distance
+    
+    // Place fog area in r channel
+    if (Color.a < 0.5) {
+        float value = (1.0 - Color.r) * FogBordersPower;
+        FragColor = vec4(max(value, FogBlackout), 0.0, 0.0, 1.0);
+    } else {
+        // Place attack area in g/b channel
+        float value = (1.0 - Color.r) * AttackBordersPower;
+        FragColor = vec4(0.0, min(value, 0.65), Color.g, 1.0);
+    }
+}
