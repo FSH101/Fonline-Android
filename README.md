@@ -52,6 +52,7 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - Platform fallbacks for `FO_HAVE_SPARK`, `FO_HAVE_ACM`, and `FO_ENABLE_SOUND` live in `Common/Common.h` so non-Android/Windows builds still get sensible defaults if the CMake definitions are absent.
 
 ### Fixes (Android/NDK build)
+- **Expected outcome:** NDK task `:app:buildCMakeDebug[arm64-v8a]` passes configure/generate and reaches compile without requesting missing headers (`SPARK.h`, `acmstrm.h`, `theora/theoradec.h`), then proceeds to the next compile/link stage.
 - **Missing `SPARK.h` (`SparkExtension.h`/`VisualParticles.cpp`)**: Android builds define `FO_HAVE_SPARK=0` for both native targets, and Spark interfaces now pull a dedicated stub header (`Source/Client/Compat/SparkStubs.h`) instead of ever including `SPARK.h` when the feature is off. Public interfaces stay intact for future re-enablement.
 - **Missing `acmstrm.h` (SoundManager.cpp:38)**: Android builds no longer include the Windows-only ACM header; a dedicated stub lives in `Source/Client/Compat/AcmStrmStub.h` and activates when `FO_HAVE_ACM=0`/`FO_ANDROID=1`, while Windows continues to include the real header. Default file extensions also prefer `ogg` on platforms without ACM support.
 - **Missing `theora/theoradec.h` (VideoClip.cpp:36)**: Theora decoding is gated behind `FO_HAVE_THEORA`; Android defaults to `0` and now compiles a minimal stub implementation of `VideoClip` so missing Theora headers no longer stop the native build. Enable the flag and provide theora libs/headers to reintroduce playback.
@@ -90,6 +91,9 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ### Fix log (2025-05-30)
 - Guarded Windows ACM includes with numeric `FO_WINDOWS` checks and defaulted Android to stubbed audio (`FO_HAVE_ACM=0`, `FO_ENABLE_SOUND=0`) so `acmstrm.h` is never requested in NDK builds. (`Source/Client/SoundManager.cpp`, `app/src/main/cpp/CMakeLists.txt`)
 - Gated Theora decoding behind `FO_HAVE_THEORA` with Android default `0` and added a stubbed `VideoClip` implementation for builds without theora headers. (`Source/Common/Common.h`, `Source/Client/VideoClip.cpp`, `app/src/main/cpp/CMakeLists.txt`)
+
+### Fix log (2025-06-15)
+- Added a local default for `FO_HAVE_SPARK` inside `SparkExtension.h` and tightened the ACM include guard in `SoundManager.cpp` to require explicit numeric `FO_WINDOWS`/`FO_HAVE_ACM` checks, keeping Android builds from requesting Windows-only headers while retaining Windows behavior.
 
 ### Fix log (2025-06-02)
 - Synced Android compile definitions between `fonline_engine` and `native_bridge`, ensuring both targets see the same Spark/ACM/Theora/audio gates plus `FO_SAFE_ARITH_RELAXED=1` and `FO_HAVE_ASSIMP=0`, with geometry still configured explicitly for the bridge. (`app/src/main/cpp/CMakeLists.txt`)

@@ -37,7 +37,7 @@
 
 #if FO_ENABLE_SOUND
 
-#    if FO_WINDOWS && FO_HAVE_ACM
+#    if defined(FO_WINDOWS) && FO_WINDOWS && defined(FO_HAVE_ACM) && FO_HAVE_ACM
 #        include "acmstrm.h"
 #    else
 #        include "Compat/AcmStrmStub.h"

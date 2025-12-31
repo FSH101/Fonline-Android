@@ -35,6 +35,10 @@
 
 #include "Common.h"
 
+#ifndef FO_HAVE_SPARK
+#    define FO_HAVE_SPARK 0
+#endif
+
 #include "Rendering.h"
 
 #if FO_HAVE_SPARK
