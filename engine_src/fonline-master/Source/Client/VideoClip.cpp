@@ -33,6 +33,10 @@
 
 #include "VideoClip.h"
 
+#ifndef FO_HAVE_THEORA
+#    define FO_HAVE_THEORA 0
+#endif
+
 #if FO_HAVE_THEORA
 
 #include "theora/theoradec.h"

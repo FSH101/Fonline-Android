@@ -156,6 +156,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.
     set(FO_GEOMETRY_MODE 2 CACHE STRING "FOnline geometry mode (1=hex, 2=square)")
+    option(FO_ENABLE_THEORA "Enable Theora video decoding if headers/libs are available" OFF)
 
     set(_APP_HEADER "${ENGINE_DIR}/Source/Frontend/Application.h")
     if(EXISTS "${_APP_HEADER}")
@@ -188,7 +189,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_HAVE_ASSIMP=0
             FO_HAVE_SPARK=0
             FO_HAVE_ACM=0
-            FO_HAVE_THEORA=0
+            FO_HAVE_THEORA=$<BOOL:${FO_ENABLE_THEORA}>
             FO_ENABLE_SOUND=0
             FO_GEOMETRY=${FO_GEOMETRY_MODE})
 
