@@ -73,8 +73,20 @@ namespace detail
     template<typename...>
     inline constexpr bool dependent_false_v = false;
 
+    template<typename T, bool IsEnum = std::is_enum_v<std::remove_cvref_t<T>>>
+    struct numeric_base_impl
+    {
+        using type = std::remove_cvref_t<T>;
+    };
+
     template<typename T>
-    using numeric_base = std::conditional_t<std::is_enum_v<T>, std::underlying_type_t<T>, T>;
+    struct numeric_base_impl<T, true>
+    {
+        using type = std::underlying_type_t<std::remove_cvref_t<T>>;
+    };
+
+    template<typename T>
+    using numeric_base = typename numeric_base_impl<T>::type;
 
     template<typename T, typename U>
         requires(std::is_arithmetic_v<numeric_base<T>> && std::is_arithmetic_v<numeric_base<U>>)
