@@ -37,9 +37,9 @@
 
 #if FO_ENABLE_SOUND
 
-#    if FO_HAVE_ACM
+#    if FO_WINDOWS && FO_HAVE_ACM
 #        include "acmstrm.h"
-#    elif FO_ANDROID
+#    else
 #        include "Compat/AcmStrmStub.h"
 #    endif
 #    include "vorbis/codec.h"

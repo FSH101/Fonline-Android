@@ -54,9 +54,10 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ### Fixes (Android/NDK build)
 - **Missing `SPARK.h` (`SparkExtension.h`/`VisualParticles.cpp`)**: Android builds define `FO_HAVE_SPARK=0` for both native targets, and Spark interfaces now pull a dedicated stub header (`Source/Client/Compat/SparkStubs.h`) instead of ever including `SPARK.h` when the feature is off. Public interfaces stay intact for future re-enablement.
 - **Missing `acmstrm.h` (SoundManager.cpp:38)**: Android builds no longer include the Windows-only ACM header; a dedicated stub lives in `Source/Client/Compat/AcmStrmStub.h` and activates when `FO_HAVE_ACM=0`/`FO_ANDROID=1`, while Windows continues to include the real header. Default file extensions also prefer `ogg` on platforms without ACM support.
+- **Missing `theora/theoradec.h` (VideoClip.cpp:36)**: Theora decoding is gated behind `FO_HAVE_THEORA`; Android defaults to `0` and now compiles a minimal stub implementation of `VideoClip` so missing Theora headers no longer stop the native build. Enable the flag and provide theora libs/headers to reintroduce playback.
 - **Undeclared `FO_DEBUG` (`MapView.cpp` `if constexpr`)**: `app/src/main/cpp/CMakeLists.txt` now sets `FO_DEBUG=1` for Debug and `FO_DEBUG=0` otherwise so the compile-time branches instantiate cleanly; `Common/Common.h` still provides a fallback when the compile definition is missing.
-- **Feature flags applied to all Android targets**: both `fonline_engine` and `native_bridge` now receive `FO_ANDROID=1`, `FO_WINDOWS=0`, the per-config `FO_DEBUG` define, and Android-default gates for Spark/ACM/sound so the compile commands consistently skip missing Windows-only headers and SPARK dependencies. Fallbacks in `Common/Common.h` now also consider `FO_ANDROID` in case `__ANDROID__` is absent.
-- **Changed files**: `.gitignore`, `app/src/main/cpp/CMakeLists.txt`, `Source/Client/SoundManager.cpp`, `Source/Client/Compat/AcmStrmStub.h`, `Source/Client/Compat/SparkStubs.h`, `Source/Client/SparkExtension.h`, `Source/Common/Common.h`, `README.md`.
+- **Feature flags applied to all Android targets**: both `fonline_engine` and `native_bridge` now receive `FO_ANDROID=1`, `FO_WINDOWS=0`, the per-config `FO_DEBUG` define, and Android-default gates for Spark/ACM/sound/video so the compile commands consistently skip missing Windows-only headers and SPARK/Theora dependencies. Fallbacks in `Common/Common.h` now also consider `FO_ANDROID` in case `__ANDROID__` is absent.
+- **Changed files**: `.gitignore`, `app/src/main/cpp/CMakeLists.txt`, `Source/Client/SoundManager.cpp`, `Source/Client/Compat/AcmStrmStub.h`, `Source/Client/Compat/SparkStubs.h`, `Source/Client/SparkExtension.h`, `Source/Client/VideoClip.cpp`, `Source/Common/Common.h`, `README.md`.
 - **How to build**: `./gradlew.bat clean :app:assembleDebug --stacktrace --info 2>&1 | Tee-Object -FilePath build_log.txt` (or `./gradlew` on *nix). This should push the NDK task past the missing-header and `FO_DEBUG` errors; the next failure, if any, will be unrelated to these fixes. The log file is now git-ignored—attach it to reviews instead of committing it.
 - **Flags/defines**: `FO_ANDROID`/`FO_WINDOWS` are set in CMake for every Android target; `FO_DEBUG` uses generator expressions per configuration; audio gates use `FO_HAVE_ACM` and `FO_ENABLE_SOUND` with Android defaults of `0`; Spark uses `FO_HAVE_SPARK=0` by default on Android, backed by stub implementations.
 
@@ -85,6 +86,10 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - Added `Source/Client/Compat/SparkStubs.h` and routed Spark headers through it whenever `FO_HAVE_SPARK=0`, keeping Android builds from requesting `SPARK.h` while preserving the runtime interface. (`Source/Client/SparkExtension.h`, `Source/Client/VisualParticles.cpp`)
 - Hardened platform fallbacks for Spark/audio flags to look at `FO_ANDROID` even when `__ANDROID__` is missing, and documented that `build_log.txt` is ignored and should be attached externally instead of committed. (`Source/Common/Common.h`, `.gitignore`, `README.md`)
 
+### Fix log (2025-05-30)
+- Guarded Windows ACM includes with numeric `FO_WINDOWS` checks and defaulted Android to stubbed audio (`FO_HAVE_ACM=0`, `FO_ENABLE_SOUND=0`) so `acmstrm.h` is never requested in NDK builds. (`Source/Client/SoundManager.cpp`, `app/src/main/cpp/CMakeLists.txt`)
+- Gated Theora decoding behind `FO_HAVE_THEORA` with Android default `0` and added a stubbed `VideoClip` implementation for builds without theora headers. (`Source/Common/Common.h`, `Source/Client/VideoClip.cpp`, `app/src/main/cpp/CMakeLists.txt`)
+
 ### Fix log (2025-05-12)
 - Exposed `FO_GEOMETRY_MODE` in CMake and defined it for both the engine and JNI bridge to ensure `FO_GEOMETRY` is always supplied during Android builds.
 
@@ -95,7 +100,7 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ```bash
 # в папке репо
  git fetch origin --prune
- git switch codex/update-readme-in-codex/restore-proper-formatting-for-codes
+ git switch codex/restore-proper-formatting-for-codes
  git pull --ff-only
 
 # сборка с логом

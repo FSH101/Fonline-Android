@@ -190,6 +190,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_HAVE_ASSIMP=0
             FO_HAVE_SPARK=0
             FO_HAVE_ACM=0
+            FO_HAVE_THEORA=0
             FO_ENABLE_SOUND=0)
 
     target_compile_definitions(native_bridge PRIVATE
@@ -202,6 +203,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_GEOMETRY=${FO_GEOMETRY_MODE}
             FO_HAVE_SPARK=0
             FO_HAVE_ACM=0
+            FO_HAVE_THEORA=0
             FO_ENABLE_SOUND=0)
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.

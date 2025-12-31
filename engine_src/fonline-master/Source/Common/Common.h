@@ -129,6 +129,14 @@ FO_END_NAMESPACE();
 #    endif
 #endif
 
+#ifndef FO_HAVE_THEORA
+#    if defined(__ANDROID__) || (defined(FO_ANDROID) && FO_ANDROID)
+#        define FO_HAVE_THEORA 0
+#    else
+#        define FO_HAVE_THEORA 1
+#    endif
+#endif
+
 #ifndef FO_ENABLE_SOUND
 #    if defined(__ANDROID__) || (defined(FO_ANDROID) && FO_ANDROID)
 #        define FO_ENABLE_SOUND 0
