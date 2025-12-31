@@ -157,13 +157,34 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     # what breaks first. We'll adjust after the first compiler error batch.
     set(FO_GEOMETRY_MODE 2 CACHE STRING "FOnline geometry mode (1=hex, 2=square)")
 
+    set(_APP_HEADER "${ENGINE_DIR}/Source/Frontend/Application.h")
+    if(EXISTS "${_APP_HEADER}")
+        message(STATUS "Found Application.h at: ${_APP_HEADER}")
+    else()
+        set(_APP_STUB_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_stubs")
+        file(MAKE_DIRECTORY "${_APP_STUB_DIR}")
+        set(_APP_STUB "${_APP_STUB_DIR}/Application.h")
+        if(NOT EXISTS "${_APP_STUB}")
+            file(WRITE "${_APP_STUB}"
+"#pragma once\n"
+"// Minimal stub used only when the engine's Application.h is absent during Android bring-up.\n"
+"struct SDL_Window;\n"
+"namespace FO_NAMESPACE { struct Window; class Application {}; }\n"
+)
+        endif()
+        message(WARNING "Application.h missing under engine sources; using generated stub at ${_APP_STUB}")
+        target_include_directories(fonline_engine PUBLIC "${_APP_STUB_DIR}")
+        target_include_directories(native_bridge PRIVATE "${_APP_STUB_DIR}")
+    endif()
+
+    add_compile_definitions(FO_GEOMETRY=${FO_GEOMETRY_MODE})
+
     target_compile_definitions(fonline_engine PUBLIC
             __ANDROID__=1
             ANDROID=1
             FO_ANDROID=1
             FO_WINDOWS=0
             FO_SAFE_ARITH_RELAXED=1
-            FO_GEOMETRY=${FO_GEOMETRY_MODE}
             FO_HAVE_ASSIMP=0)
 
     target_compile_definitions(native_bridge PRIVATE FO_GEOMETRY=${FO_GEOMETRY_MODE})
