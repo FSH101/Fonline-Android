@@ -8,7 +8,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".SDLMainActivity"
             android:exported="true"
             android:screenOrientation="sensorLandscape">
             <intent-filter>

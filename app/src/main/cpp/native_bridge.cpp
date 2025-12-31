@@ -15,6 +15,12 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
+#if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+extern "C" bool AndroidClientInit();
+extern "C" bool AndroidClientFrame();
+extern "C" void AndroidClientShutdown();
+#endif
+
 namespace {
     std::mutex gMutex;
     ANativeWindow* gWindow = nullptr;
@@ -23,6 +29,10 @@ namespace {
 
     std::atomic<bool> gRunning{false};
     std::thread gRenderThread;
+
+#if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+    std::atomic<bool> gEngineReady{false};
+#endif
 
     std::atomic<int> gTouchCount{0};
     std::atomic<float> gLastX{0};
@@ -51,6 +61,14 @@ namespace {
         stopRenderThreadLocked();
         if (!gWindow) return;
 
+#if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+        if (!gEngineReady.load()) {
+            LOGI("InitApp: starting AndroidClientInit");
+            gEngineReady.store(AndroidClientInit());
+            LOGI("InitApp result: %d", static_cast<int>(gEngineReady.load()));
+        }
+#endif
+
         gRunning.store(true);
         gRenderThread = std::thread([] {
             using namespace std::chrono_literals;
@@ -78,6 +96,15 @@ namespace {
                     std::this_thread::sleep_for(16ms);
                     continue;
                 }
+
+#if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+                bool keepRunning = true;
+
+                if (gEngineReady.load()) {
+                    LOGI("BeginFrame %d", frame);
+                    keepRunning = AndroidClientFrame();
+                }
+#endif
 
                 ANativeWindow_Buffer buffer{};
                 if (ANativeWindow_lock(wnd, &buffer, nullptr) == 0) {
@@ -128,6 +155,16 @@ namespace {
                 }
 
                 ANativeWindow_release(wnd);
+
+#if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+                if (gEngineReady.load()) {
+                    LOGI("EndFrame %d", frame);
+                    if (!keepRunning) {
+                        LOGI("Engine requested quit");
+                        gRunning.store(false);
+                    }
+                }
+#endif
 
                 frame++;
                 std::this_thread::sleep_for(16ms); // ~60 fps
@@ -218,6 +255,14 @@ Java_com_example_fonline_NativeBridge_nativeShutdown(JNIEnv* env, jobject) {
 
     stopRenderThreadLocked();
     releaseWindowLocked();
+
+#if defined(FONLINE_ENGINE_PRESENT) && FONLINE_ENGINE_PRESENT
+    if (gEngineReady.load()) {
+        LOGI("Shutting down engine");
+        AndroidClientShutdown();
+        gEngineReady.store(false);
+    }
+#endif
 
     if (gAssetMgrObj) {
         env->DeleteGlobalRef(gAssetMgrObj);
