@@ -49,3 +49,6 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ### Fix log (2025-05-12)
 - Hardened `safe_numeric_cast` traits so only enum types instantiate `std::underlying_type`, avoiding Android/libc++ template failures while preserving the existing range checks.
 - Exposed `FO_GEOMETRY_MODE` in CMake and defined it for both the engine and JNI bridge to ensure `FO_GEOMETRY` is always supplied during Android builds.
+
+### Проверка обновления README
+- Этот блок добавлен для подтверждения, что README обновлён в рамках ветки `codex/restore-proper-formatting-for-codes`.
