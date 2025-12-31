@@ -35,7 +35,13 @@
 
 #include "Common.h"
 
+#ifndef FO_HAVE_SPARK
+#    define FO_HAVE_SPARK 0
+#endif
+
 #include "Rendering.h"
+
+#if FO_HAVE_SPARK
 
 FO_DISABLE_WARNINGS_PUSH()
 #include "SPARK.h"
@@ -143,3 +149,9 @@ namespace SPK::FO
         void computeAABB(Vector3D& aabbMin, Vector3D& aabbMax, const Group& group, const DataSet* dataSet) const override;
     };
 }
+
+#else
+
+#include "Compat/SparkStubs.h"
+
+#endif

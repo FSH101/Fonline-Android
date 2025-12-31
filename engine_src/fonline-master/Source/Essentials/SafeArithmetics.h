@@ -74,24 +74,29 @@ namespace detail
     inline constexpr bool dependent_false_v = false;
 
     template<typename T, typename Enable = void>
-    struct numeric_value
+    struct enum_underlying
     {
-        using type = void;
-        static constexpr bool valid = false;
+        using type = std::remove_cvref_t<T>;
+        static constexpr bool valid = std::is_arithmetic_v<type>;
     };
 
     template<typename T>
-    struct numeric_value<T, std::enable_if_t<std::is_enum_v<std::remove_cvref_t<T>>>>
+    struct enum_underlying<T, std::enable_if_t<std::is_enum_v<std::remove_cvref_t<T>>>>
     {
         using type = std::underlying_type_t<std::remove_cvref_t<T>>;
         static constexpr bool valid = std::is_arithmetic_v<type>;
     };
 
     template<typename T>
-    struct numeric_value<T, std::enable_if_t<std::is_arithmetic_v<std::remove_cvref_t<T>>>>
+    struct numeric_value
     {
-        using type = std::remove_cvref_t<T>;
-        static constexpr bool valid = true;
+        using enum_helper = enum_underlying<T>;
+        using type = typename enum_helper::type;
+        static constexpr bool valid = enum_helper::valid;
+
+        static constexpr bool is_enum = std::is_enum_v<std::remove_cvref_t<T>>;
+        static constexpr bool is_float = std::floating_point<type>;
+        static constexpr bool is_integral = std::integral<type>;
     };
 
     template<typename T>
@@ -108,9 +113,26 @@ namespace detail
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
-        if constexpr (std::floating_point<To> || std::floating_point<From>) {
+        using ToTraits = numeric_value<To>;
+        using FromTraits = numeric_value<From>;
+
+        if constexpr (ToTraits::is_float || FromTraits::is_float) {
 #if !FO_SAFE_ARITH_RELAXED
             static_assert(std::floating_point<To>, "Use iround for float to int conversion");
+#else
+            using Common = std::common_type_t<To, From>;
+            constexpr auto target_min = static_cast<Common>(std::numeric_limits<To>::lowest());
+            constexpr auto target_max = static_cast<Common>(std::numeric_limits<To>::max());
+            auto common_value = static_cast<Common>(value);
+
+            if (common_value < target_min) {
+                common_value = target_min;
+            }
+            else if (common_value > target_max) {
+                common_value = target_max;
+            }
+
+            return static_cast<T>(static_cast<To>(common_value));
 #endif
         }
 

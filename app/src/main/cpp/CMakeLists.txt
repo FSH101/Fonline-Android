@@ -156,17 +156,46 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.
     set(FO_GEOMETRY_MODE 2 CACHE STRING "FOnline geometry mode (1=hex, 2=square)")
+    option(FO_ENABLE_THEORA "Enable Theora video decoding if headers/libs are available" OFF)
 
-    target_compile_definitions(fonline_engine PUBLIC
+    set(_APP_HEADER "${ENGINE_DIR}/Source/Frontend/Application.h")
+    if(EXISTS "${_APP_HEADER}")
+        message(STATUS "Found Application.h at: ${_APP_HEADER}")
+    else()
+        set(_APP_STUB_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_stubs")
+        file(MAKE_DIRECTORY "${_APP_STUB_DIR}")
+        set(_APP_STUB "${_APP_STUB_DIR}/Application.h")
+        if(NOT EXISTS "${_APP_STUB}")
+            file(WRITE "${_APP_STUB}"
+"#pragma once\n"
+"// Minimal stub used only when the engine's Application.h is absent during Android bring-up.\n"
+"struct SDL_Window;\n"
+"namespace FO_NAMESPACE { struct Window; class Application {}; }\n"
+)
+        endif()
+        message(WARNING "Application.h missing under engine sources; using generated stub at ${_APP_STUB}")
+        target_include_directories(fonline_engine PUBLIC "${_APP_STUB_DIR}")
+        target_include_directories(native_bridge PRIVATE "${_APP_STUB_DIR}")
+    endif()
+
+    set(ANDROID_ENGINE_COMMON_DEFS
+            $<$<CONFIG:Debug>:FO_DEBUG=1>
+            $<$<NOT:$<CONFIG:Debug>>:FO_DEBUG=0>
             __ANDROID__=1
             ANDROID=1
             FO_ANDROID=1
             FO_WINDOWS=0
             FO_SAFE_ARITH_RELAXED=1
-            FO_GEOMETRY=${FO_GEOMETRY_MODE}
-            FO_HAVE_ASSIMP=0)
+            FO_HAVE_ASSIMP=0
+            FO_HAVE_SPARK=0
+            FO_HAVE_ACM=0
+            FO_HAVE_THEORA=$<BOOL:${FO_ENABLE_THEORA}>
+            FO_ENABLE_SOUND=0
+            FO_GEOMETRY=${FO_GEOMETRY_MODE})
 
-    target_compile_definitions(native_bridge PRIVATE FO_GEOMETRY=${FO_GEOMETRY_MODE})
+    target_compile_definitions(fonline_engine PUBLIC ${ANDROID_ENGINE_COMMON_DEFS})
+
+    target_compile_definitions(native_bridge PRIVATE ${ANDROID_ENGINE_COMMON_DEFS})
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
     target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)

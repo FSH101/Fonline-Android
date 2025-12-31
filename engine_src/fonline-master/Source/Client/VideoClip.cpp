@@ -33,6 +33,12 @@
 
 #include "VideoClip.h"
 
+#ifndef FO_HAVE_THEORA
+#    define FO_HAVE_THEORA 0
+#endif
+
+#if FO_HAVE_THEORA
+
 #include "theora/theoradec.h"
 
 FO_BEGIN_NAMESPACE();
@@ -446,3 +452,139 @@ int32 VideoClip::DecodePacket()
 }
 
 FO_END_NAMESPACE();
+
+#else
+
+FO_BEGIN_NAMESPACE();
+
+struct VideoClip::Impl
+{
+    bool Stopped {true};
+    bool Paused {};
+    bool Looped {};
+    vector<uint8> RawVideoData {};
+    isize32 VideoSize {};
+    vector<ucolor> RenderedTextureData {};
+    int32 CurFrame {};
+    timespan AverageRenderTime {};
+    nanotime StartTime {};
+    nanotime RenderTime {};
+    nanotime PauseTime {};
+};
+
+VideoClip::VideoClip(vector<uint8> video_data) :
+    _impl {SafeAlloc::MakeUnique<Impl>()}
+{
+    FO_STACK_TRACE_ENTRY();
+
+    _impl->RawVideoData = std::move(video_data);
+}
+
+VideoClip::~VideoClip() = default;
+
+auto VideoClip::IsPlaying() const noexcept -> bool
+{
+    FO_NO_STACK_TRACE_ENTRY();
+
+    return false;
+}
+
+auto VideoClip::IsStopped() const noexcept -> bool
+{
+    FO_NO_STACK_TRACE_ENTRY();
+
+    return _impl->Stopped;
+}
+
+auto VideoClip::IsPaused() const noexcept -> bool
+{
+    FO_NO_STACK_TRACE_ENTRY();
+
+    return _impl->Paused;
+}
+
+auto VideoClip::IsLooped() const noexcept -> bool
+{
+    FO_NO_STACK_TRACE_ENTRY();
+
+    return _impl->Looped;
+}
+
+auto VideoClip::GetTime() const -> timespan
+{
+    FO_NO_STACK_TRACE_ENTRY();
+
+    if (_impl->Stopped) {
+        return std::chrono::milliseconds {0};
+    }
+
+    if (_impl->Paused) {
+        return _impl->PauseTime - _impl->StartTime;
+    }
+
+    return _impl->RenderTime - _impl->StartTime;
+}
+
+auto VideoClip::GetSize() const -> isize32
+{
+    FO_NO_STACK_TRACE_ENTRY();
+
+    return _impl->VideoSize;
+}
+
+void VideoClip::Stop()
+{
+    FO_STACK_TRACE_ENTRY();
+
+    _impl->Stopped = true;
+}
+
+void VideoClip::Pause()
+{
+    FO_STACK_TRACE_ENTRY();
+
+    _impl->Paused = true;
+    _impl->PauseTime = nanotime::now();
+}
+
+void VideoClip::Resume()
+{
+    FO_STACK_TRACE_ENTRY();
+
+    _impl->Paused = false;
+    _impl->Stopped = false;
+    _impl->StartTime = nanotime::now();
+}
+
+void VideoClip::SetLooped(bool enabled)
+{
+    FO_STACK_TRACE_ENTRY();
+
+    _impl->Looped = enabled;
+}
+
+void VideoClip::SetTime(timespan time)
+{
+    FO_STACK_TRACE_ENTRY();
+
+    _impl->RenderTime = _impl->StartTime + time;
+    _impl->PauseTime = _impl->RenderTime;
+}
+
+auto VideoClip::RenderFrame() -> const vector<ucolor>&
+{
+    FO_STACK_TRACE_ENTRY();
+
+    return _impl->RenderedTextureData;
+}
+
+auto VideoClip::DecodePacket() -> int32
+{
+    FO_STACK_TRACE_ENTRY();
+
+    return -1;
+}
+
+FO_END_NAMESPACE();
+
+#endif

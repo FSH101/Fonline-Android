@@ -35,9 +35,15 @@
 #include "Application.h"
 #include "FileSystem.h"
 
-#include "acmstrm.h"
-#include "vorbis/codec.h"
-#include "vorbis/vorbisfile.h"
+#if FO_ENABLE_SOUND
+
+#    if defined(FO_WINDOWS) && FO_WINDOWS && defined(FO_HAVE_ACM) && FO_HAVE_ACM
+#        include "acmstrm.h"
+#    else
+#        include "Compat/AcmStrmStub.h"
+#    endif
+#    include "vorbis/codec.h"
+#    include "vorbis/vorbisfile.h"
 
 FO_BEGIN_NAMESPACE();
 
@@ -209,7 +215,11 @@ auto SoundManager::Load(string_view fname, bool is_music, timespan repeat_time) 
 
     // Default ext
     if (ext.empty()) {
+#    if FO_HAVE_ACM
         ext = "acm";
+#    else
+        ext = "ogg";
+#    endif
         fixed_fname += "." + ext;
     }
 
@@ -218,9 +228,16 @@ auto SoundManager::Load(string_view fname, bool is_music, timespan repeat_time) 
     if (ext == "wav" && !LoadWav(sound.get(), fixed_fname)) {
         return false;
     }
+#    if FO_HAVE_ACM
     if (ext == "acm" && !LoadAcm(sound.get(), fixed_fname, is_music)) {
         return false;
     }
+#    else
+    if (ext == "acm") {
+        WriteLog("ACM decoding is unavailable on this platform");
+        return false;
+    }
+#    endif
     if (ext == "ogg" && !LoadOgg(sound.get(), fixed_fname)) {
         return false;
     }
@@ -634,3 +651,38 @@ void SoundManager::StopMusic()
 }
 
 FO_END_NAMESPACE();
+
+#else
+
+FO_BEGIN_NAMESPACE();
+
+SoundManager::SoundManager(AudioSettings& settings, FileSystem& resources)
+{
+    ignore_unused(settings, resources);
+}
+
+SoundManager::~SoundManager() = default;
+
+auto SoundManager::PlaySound(const map<string, string>& sound_names, string_view name) -> bool
+{
+    ignore_unused(sound_names, name);
+    return false;
+}
+
+auto SoundManager::PlayMusic(string_view fname, timespan repeat_time) -> bool
+{
+    ignore_unused(fname, repeat_time);
+    return false;
+}
+
+void SoundManager::StopSounds()
+{
+}
+
+void SoundManager::StopMusic()
+{
+}
+
+FO_END_NAMESPACE();
+
+#endif
