@@ -35,7 +35,8 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - If you enable additional ABIs or change toolchain versions, keep them in sync with the values in `app/build.gradle.kts` to avoid mismatch errors.
 
 ## Fixes (codex/restore-proper-formatting-for-codes)
-- Safe arithmetic templates now normalize enum/unsigned/signed conversions instead of tripping static assertions during Android builds.
-- Assimp headers are optional on Android: when `FO_HAVE_ASSIMP=0`, lightweight math stubs (`AssimpStubs.h`) provide the required matrix/vector/quaternion types so the client sources still compile.
-- Android CMake adds clearer template diagnostics (`-ftemplate-backtrace-limit=0`, `-ferror-limit=5`) to surface the first failing instantiation when troubleshooting.
-- Build with `./gradlew clean :app:assembleDebug` (or `gradlew.bat` on Windows); ABIs listed in `abiFilters` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) are wired for the native build.
+- **Formatting layer:** Android toolchains ship an incomplete `<format>`; `BasicCore.h` now routes formatting through `{fmt}` (`engine_src/fonline-master/ThirdParty/fmt/include/fmt/format.h`) when `__ANDROID__` is defined. Other platforms keep using `std::format` by default.
+- **Safe arithmetic:** template helpers normalize enum/unsigned/signed conversions instead of tripping static assertions during Android builds (`Source/Essentials/SafeArithmetics.h`).
+- **Assimp optionality:** when `FO_HAVE_ASSIMP=0`, lightweight math stubs (`Source/Common/AssimpStubs.h`) provide the required matrix/vector/quaternion types so the client sources still compile. Android CMake defines `FO_HAVE_ASSIMP=0` by default.
+- **Diagnostics for template errors:** Android CMake adds `-ftemplate-backtrace-limit=0` and a small `-ferror-limit` so the first failing instantiation is visible when troubleshooting.
+- **How to build:** run `./gradlew clean :app:assembleDebug` (or `gradlew.bat` on Windows). ABIs listed in `abiFilters` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) are wired for the native build.
