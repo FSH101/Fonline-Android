@@ -12,9 +12,10 @@ set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 
-# Our JNI / ANativeWindow bridge (already works).
-add_library(native_bridge SHARED
-        native_bridge.cpp)
+# SDL-driven entrypoint + JNI helpers.
+add_library(main SHARED
+        native_bridge.cpp
+        sdl_main.cpp)
 
 # Android system libs
 find_library(log-lib log)
@@ -22,7 +23,7 @@ find_library(android-lib android)
 find_library(egl-lib EGL)
 find_library(glesv2-lib GLESv2)
 
-target_link_libraries(native_bridge
+target_link_libraries(main
         ${log-lib}
         ${android-lib}
         ${egl-lib}
@@ -154,7 +155,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             # header-only fmt fallback for Android builds
             "${ENGINE_DIR}/ThirdParty/fmt/include")
 
-    target_include_directories(native_bridge PRIVATE
+    target_include_directories(main PRIVATE
             "${ENGINE_DIR}/Source"
             "${ENGINE_DIR}/Source/Common"
             "${ENGINE_DIR}/Source/Frontend"
@@ -183,7 +184,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
         endif()
         message(WARNING "Application.h missing under engine sources; using generated stub at ${_APP_STUB}")
         target_include_directories(fonline_engine PUBLIC "${_APP_STUB_DIR}")
-        target_include_directories(native_bridge PRIVATE "${_APP_STUB_DIR}")
+        target_include_directories(main PRIVATE "${_APP_STUB_DIR}")
     endif()
 
     set(ANDROID_ENGINE_COMMON_DEFS
@@ -204,7 +205,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
 
     target_compile_definitions(fonline_engine PUBLIC ${ANDROID_ENGINE_COMMON_DEFS})
 
-    target_compile_definitions(native_bridge PRIVATE ${ANDROID_ENGINE_COMMON_DEFS})
+    target_compile_definitions(main PRIVATE ${ANDROID_ENGINE_COMMON_DEFS})
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
     target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)
@@ -217,9 +218,9 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             SDL3::SDL3-static)
 
     # Link engine into our JNI bridge so it ends up in the .apk.
-    target_link_libraries(native_bridge fonline_engine)
+    target_link_libraries(main fonline_engine)
 
-    target_compile_definitions(native_bridge PRIVATE FONLINE_ENGINE_PRESENT=1)
+    target_compile_definitions(main PRIVATE FONLINE_ENGINE_PRESENT=1)
 else()
     message(STATUS "FOnline engine not built (missing sources or FONLINE_WITH_ENGINE=OFF).")
 endif()

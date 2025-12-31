@@ -6,7 +6,7 @@ import android.view.Surface
 
 object NativeBridge {
     init {
-        System.loadLibrary("fonline")
+        System.loadLibrary("main")
     }
 
     @Volatile private var inited = false
