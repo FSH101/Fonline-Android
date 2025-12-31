@@ -114,7 +114,7 @@ FO_END_NAMESPACE();
 #endif
 
 #ifndef FO_HAVE_SPARK
-#    if defined(__ANDROID__)
+#    if defined(__ANDROID__) || (defined(FO_ANDROID) && FO_ANDROID)
 #        define FO_HAVE_SPARK 0
 #    else
 #        define FO_HAVE_SPARK 1
@@ -130,7 +130,7 @@ FO_END_NAMESPACE();
 #endif
 
 #ifndef FO_ENABLE_SOUND
-#    if defined(__ANDROID__)
+#    if defined(__ANDROID__) || (defined(FO_ANDROID) && FO_ANDROID)
 #        define FO_ENABLE_SOUND 0
 #    else
 #        define FO_ENABLE_SOUND 1

@@ -11,6 +11,7 @@ local.properties
 
 # Logs
 *.log
+build_log.txt
 
 # OS junk
 .DS_Store
