@@ -11,3 +11,4 @@
 #define FO_VERSION_TEXT "0.0.0-android-stub"
 
 inline constexpr int FO_PROTO_VERSION = 0;
+inline constexpr int FO_COMPATIBILITY_VERSION = 0;

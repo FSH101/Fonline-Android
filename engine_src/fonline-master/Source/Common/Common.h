@@ -99,6 +99,12 @@ FO_BEGIN_NAMESPACE();
 // Todo: replace dependency from Assimp types (matrix/vector/quaternion/color)
 FO_END_NAMESPACE();
 
+#ifndef FO_GEOMETRY
+#    if defined(__ANDROID__)
+#        define FO_GEOMETRY 2
+#    endif
+#endif
+
 #ifndef FO_HAVE_ASSIMP
 #    if defined(__ANDROID__)
 #        define FO_HAVE_ASSIMP 0

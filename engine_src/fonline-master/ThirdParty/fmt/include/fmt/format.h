@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <iterator>
+#include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -52,6 +54,19 @@ private:
 
 namespace detail {
 
+template<typename T, typename = void>
+struct is_streamable : std::false_type
+{
+};
+
+template<typename T>
+struct is_streamable<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>> : std::true_type
+{
+};
+
+template<typename T>
+inline constexpr auto is_streamable_v = is_streamable<T>::value;
+
 inline void append_chunk(std::string& out, std::string_view chunk)
 {
     out.append(chunk.data(), chunk.size());
@@ -69,9 +84,16 @@ inline auto parse_placeholder(std::string_view fmt, std::string_view::size_type 
 template<typename T>
 inline auto to_string_any(T&& value) -> std::string
 {
-    std::ostringstream ss;
-    ss << std::forward<T>(value);
-    return ss.str();
+    using Decayed = std::decay_t<T>;
+
+    if constexpr (is_streamable_v<Decayed>) {
+        std::ostringstream ss;
+        ss << std::forward<T>(value);
+        return ss.str();
+    }
+    else {
+        return std::string {"<unformattable>"};
+    }
 }
 
 template<typename T>
