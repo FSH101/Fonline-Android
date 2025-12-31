@@ -39,6 +39,8 @@
 
 #    if FO_HAVE_ACM
 #        include "acmstrm.h"
+#    elif FO_ANDROID
+#        include "Compat/AcmStrmStub.h"
 #    endif
 #    include "vorbis/codec.h"
 #    include "vorbis/vorbisfile.h"
@@ -213,7 +215,11 @@ auto SoundManager::Load(string_view fname, bool is_music, timespan repeat_time) 
 
     // Default ext
     if (ext.empty()) {
+#    if FO_HAVE_ACM
         ext = "acm";
+#    else
+        ext = "ogg";
+#    endif
         fixed_fname += "." + ext;
     }
 
@@ -222,9 +228,16 @@ auto SoundManager::Load(string_view fname, bool is_music, timespan repeat_time) 
     if (ext == "wav" && !LoadWav(sound.get(), fixed_fname)) {
         return false;
     }
+#    if FO_HAVE_ACM
     if (ext == "acm" && !LoadAcm(sound.get(), fixed_fname, is_music)) {
         return false;
     }
+#    else
+    if (ext == "acm") {
+        WriteLog("ACM decoding is unavailable on this platform");
+        return false;
+    }
+#    endif
     if (ext == "ogg" && !LoadOgg(sound.get(), fixed_fname)) {
         return false;
     }

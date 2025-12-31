@@ -51,6 +51,13 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - Windows ACM audio and the general sound backend are disabled for Android via `FO_HAVE_ACM=0` and `FO_ENABLE_SOUND=0`. `SoundManager.cpp` now compiles lightweight stubs when sound is off; toggle these in `app/src/main/cpp/CMakeLists.txt` (per target) or override in `Common/Common.h`.
 - Platform fallbacks for `FO_HAVE_SPARK`, `FO_HAVE_ACM`, and `FO_ENABLE_SOUND` live in `Common/Common.h` so non-Android/Windows builds still get sensible defaults if the CMake definitions are absent.
 
+### Fixes (Android/NDK build)
+- **Missing `acmstrm.h` (SoundManager.cpp:38)**: Android builds no longer include the Windows-only ACM header; a dedicated stub lives in `Source/Client/Compat/AcmStrmStub.h` and activates when `FO_HAVE_ACM=0`/`FO_ANDROID=1`, while Windows continues to include the real header. Default file extensions also prefer `ogg` on platforms without ACM support.
+- **Undeclared `FO_DEBUG` (`MapView.cpp` `if constexpr`)**: `app/src/main/cpp/CMakeLists.txt` now sets `FO_DEBUG=1` for Debug and `FO_DEBUG=0` otherwise so the compile-time branches instantiate cleanly; `Common/Common.h` still provides a fallback when the compile definition is missing.
+- **Changed files**: `Source/Client/SoundManager.cpp`, `Source/Client/Compat/AcmStrmStub.h`, `README.md`.
+- **How to build**: `./gradlew.bat clean :app:assembleDebug --stacktrace --info 2>&1 | Tee-Object -FilePath build_log.txt` (or `./gradlew` on *nix). This should push the NDK task past the missing-header and `FO_DEBUG` errors; the next failure, if any, will be unrelated to these fixes.
+- **Flags/defines**: `FO_ANDROID`/`FO_WINDOWS` are set in CMake; `FO_DEBUG` uses generator expressions per configuration; audio gates use `FO_HAVE_ACM` and `FO_ENABLE_SOUND` with Android defaults of `0`.
+
 ### Known limitations / временные заглушки
 - Gradle distribution download is blocked in this container; verify on a Windows host or CI with network access to ensure there are no further C++/linker errors beyond the fixed include/trait issues.
 - `Application.h` stub generation only triggers when the engine checkout is incomplete; on a full checkout the real header is used. If the stub is used, functionality will be minimal until the real implementation is available.
@@ -74,3 +81,14 @@ The Gradle scripts already configure the external native build to use `app/src/m
 
 ### Проверка обновления README
 - Этот блок добавлен для подтверждения, что README обновлён в рамках ветки `codex/restore-proper-formatting-for-codes`.
+
+### Команды для Дениса (repro/build)
+```bash
+# в папке репо
+ git fetch origin --prune
+ git switch codex/update-readme-in-codex/restore-proper-formatting-for-codes
+ git pull --ff-only
+
+# сборка с логом
+ ./gradlew.bat clean :app:assembleDebug --stacktrace --info 2>&1 | Tee-Object -FilePath build_log.txt
+```
