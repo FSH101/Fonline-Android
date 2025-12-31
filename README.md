@@ -35,8 +35,10 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - If you enable additional ABIs or change toolchain versions, keep them in sync with the values in `app/build.gradle.kts` to avoid mismatch errors.
 
 ## Fixes (codex/restore-proper-formatting-for-codes)
-- **Formatting layer:** Android toolchains ship an incomplete `<format>`; `BasicCore.h` now routes formatting through `{fmt}` (`engine_src/fonline-master/ThirdParty/fmt/include/fmt/format.h`) when `__ANDROID__` is defined. Other platforms keep using `std::format` by default.
-- **Safe arithmetic:** template helpers normalize enum/unsigned/signed conversions instead of tripping static assertions during Android builds (`Source/Essentials/SafeArithmetics.h`).
+- **Formatting compatibility:** Added `FormatCompat.h` and routed engine headers to use `fo_fmt` (mapped to `{fmt}` on Android) instead of the incomplete NDK `<format>` implementation (`Source/Essentials/BasicCore.h`, `Source/Essentials/StringUtils.h`, `Source/Essentials/Containers.h`, `Source/Essentials/ExceptionHadling.h`).
+- **Safe arithmetic on Android:** The final fallback branch in `clamp_to` now uses a permissive cast under Android and a dependent `static_assert` elsewhere so template instantiation no longer hard-fails with `static_assert(false)` (`Source/Essentials/SafeArithmetics.h`).
+- **Geometry mode:** Android CMake now defines `FO_GEOMETRY=2` (square) to satisfy the engine's required geometry switch (`app/src/main/cpp/CMakeLists.txt`).
+- **Missing headers resolved:** Added `Source/Generated/Version-Include.h` stub and exposed `Source/Frontend`/`Source/Generated` include directories so `Application.h`, `Rendering.h`, and `Version-Include.h` resolve during native builds.
 - **Assimp optionality:** when `FO_HAVE_ASSIMP=0`, lightweight math stubs (`Source/Common/AssimpStubs.h`) provide the required matrix/vector/quaternion types so the client sources still compile. Android CMake defines `FO_HAVE_ASSIMP=0` by default.
 - **Diagnostics for template errors:** Android CMake adds `-ftemplate-backtrace-limit=0` and a small `-ferror-limit` so the first failing instantiation is visible when troubleshooting.
 - **How to build:** run `./gradlew clean :app:assembleDebug` (or `gradlew.bat` on Windows). ABIs listed in `abiFilters` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) are wired for the native build.

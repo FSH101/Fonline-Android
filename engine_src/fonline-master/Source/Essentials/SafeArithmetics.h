@@ -62,6 +62,9 @@ FO_DECLARE_EXCEPTION(DivisionByZeroException);
 
 namespace detail
 {
+    template<typename...>
+    inline constexpr bool dependent_false_v = false;
+
     template<typename T>
     using numeric_base = std::conditional_t<std::is_enum_v<T>, std::underlying_type_t<T>, T>;
 
@@ -194,7 +197,13 @@ template<typename T, typename U>
         }
     }
     else {
-        static_assert(false);
+#if defined(__ANDROID__)
+        // Android NDK builds prefer a permissive fallback instead of halting
+        // the compilation on uncommon cross-signed conversions.
+        value = static_cast<U>(static_cast<T>(value));
+#else
+        static_assert(detail::dependent_false_v<T, U>, "Unsupported numeric cast combination");
+#endif
     }
 
     return static_cast<T>(value);

@@ -137,6 +137,8 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/Common"
             "${ENGINE_DIR}/Source/Client"
             "${ENGINE_DIR}/Source/Server"
+            "${ENGINE_DIR}/Source/Frontend"
+            "${ENGINE_DIR}/Source/Generated"
             # ankerl::unordered_dense is now stored under ThirdParty/ankerl
             "${ENGINE_DIR}/ThirdParty"
             "${ENGINE_DIR}/ThirdParty/ankerl/include"
@@ -150,6 +152,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             ANDROID=1
             FO_ANDROID=1
             FO_WINDOWS=0
+            FO_GEOMETRY=2
             FO_HAVE_ASSIMP=0)
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.

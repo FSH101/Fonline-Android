@@ -108,13 +108,7 @@
 #include "ankerl/unordered_dense.h"
 #define FO_HASH_NAMESPACE ankerl::unordered_dense::
 
-#if defined(__ANDROID__)
-#include "fmt/format.h"
-namespace fo_fmt = fmt;
-#else
-#include <format>
-namespace fo_fmt = std;
-#endif
+#include "FormatCompat.h"
 
 // OS specific API
 #if FO_MAC || FO_IOS
