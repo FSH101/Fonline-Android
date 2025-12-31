@@ -53,13 +53,13 @@ enum class LogType : uint8
 extern void WriteLogMessage(LogType type, string_view message) noexcept;
 
 template<typename... Args>
-void WriteLog(std::format_string<Args...>&& format, Args&&... args) noexcept
+void WriteLog(fo_fmt::format_string<Args...>&& format, Args&&... args) noexcept
 {
     WriteLogMessage(LogType::Info, strex(strex::safe_format, std::move(format), std::forward<Args>(args)...));
 }
 
 template<typename... Args>
-void WriteLog(LogType type, std::format_string<Args...>&& format, Args&&... args) noexcept
+void WriteLog(LogType type, fo_fmt::format_string<Args...>&& format, Args&&... args) noexcept
 {
     WriteLogMessage(type, strex(strex::safe_format, std::move(format), std::forward<Args>(args)...));
 }

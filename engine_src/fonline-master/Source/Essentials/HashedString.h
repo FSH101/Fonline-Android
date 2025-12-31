@@ -82,12 +82,12 @@ FO_DECLARE_TYPE_HASHER_EXT(FO_NAMESPACE hstring, v.as_hash());
 
 FO_END_NAMESPACE();
 template<>
-struct std::formatter<FO_NAMESPACE hstring> : formatter<FO_NAMESPACE string_view>
+struct fo_fmt::formatter<FO_NAMESPACE hstring> : fo_fmt::formatter<FO_NAMESPACE string_view>
 {
     template<typename FormatContext>
     auto format(const FO_NAMESPACE hstring& value, FormatContext& ctx) const
     {
-        return formatter<FO_NAMESPACE string_view>::format(value.as_str(), ctx);
+        return fo_fmt::formatter<FO_NAMESPACE string_view>::format(value.as_str(), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();

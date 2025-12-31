@@ -117,14 +117,14 @@ FO_DECLARE_TYPE_HASHER_EXT(FO_NAMESPACE ucolor, v.underlying_value());
 
 FO_END_NAMESPACE();
 template<>
-struct std::formatter<FO_NAMESPACE ucolor> : formatter<FO_NAMESPACE string_view>
+struct fo_fmt::formatter<FO_NAMESPACE ucolor> : fo_fmt::formatter<FO_NAMESPACE string_view>
 {
     template<typename FormatContext>
     auto format(const FO_NAMESPACE ucolor& value, FormatContext& ctx) const
     {
         FO_NAMESPACE string buf;
-        std::format_to(std::back_inserter(buf), "0x{:x}", value.rgba);
-        return formatter<FO_NAMESPACE string_view>::format(buf, ctx);
+        fo_fmt::format_to(std::back_inserter(buf), "0x{:x}", value.rgba);
+        return fo_fmt::formatter<FO_NAMESPACE string_view>::format(buf, ctx);
     }
 };
 FO_BEGIN_NAMESPACE();

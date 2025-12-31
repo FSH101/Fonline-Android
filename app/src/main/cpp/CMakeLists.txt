@@ -139,7 +139,9 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/Server"
             # ankerl::unordered_dense is now stored under ThirdParty/ankerl
             "${ENGINE_DIR}/ThirdParty"
-            "${ENGINE_DIR}/ThirdParty/ankerl/include")
+            "${ENGINE_DIR}/ThirdParty/ankerl/include"
+            # header-only fmt fallback for Android builds
+            "${ENGINE_DIR}/ThirdParty/fmt/include")
 
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.

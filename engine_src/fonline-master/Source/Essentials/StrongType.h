@@ -120,12 +120,12 @@ concept is_strong_type = requires {
 FO_END_NAMESPACE();
 template<typename T>
     requires(FO_NAMESPACE is_strong_type<T>)
-struct std::formatter<T> : formatter<typename T::underlying_type> // NOLINT(cert-dcl58-cpp)
+struct fo_fmt::formatter<T> : fo_fmt::formatter<typename T::underlying_type> // NOLINT(cert-dcl58-cpp)
 {
     template<typename FormatContext>
     auto format(const T& value, FormatContext& ctx) const
     {
-        return formatter<typename T::underlying_type>::format(value.underlying_value(), ctx);
+        return fo_fmt::formatter<typename T::underlying_type>::format(value.underlying_value(), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();

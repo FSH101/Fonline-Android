@@ -134,28 +134,49 @@ template<typename T, typename U>
         // Always fit
     }
     else if constexpr (std::is_unsigned_v<T> && std::is_unsigned_v<U> && sizeof(T) < sizeof(U)) {
-        static_assert(false, "Safe conversion not possible");
+        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
+            value = static_cast<U>(std::numeric_limits<T>::max());
+        }
     }
     else if constexpr (std::is_signed_v<T> && std::is_signed_v<U> && sizeof(T) >= sizeof(U)) {
         // Always fit
     }
     else if constexpr (std::is_signed_v<T> && std::is_signed_v<U> && sizeof(T) < sizeof(U)) {
-        static_assert(false, "Safe conversion not possible");
+        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
+            value = static_cast<U>(std::numeric_limits<T>::max());
+        }
+        if (value < static_cast<U>(std::numeric_limits<T>::min())) {
+            value = static_cast<U>(std::numeric_limits<T>::min());
+        }
     }
     else if constexpr (std::is_unsigned_v<T> && std::is_signed_v<U> && sizeof(T) >= sizeof(U)) {
-        static_assert(false, "Safe conversion not possible");
+        if (value < 0) {
+            value = 0;
+        }
+        else if (value > static_cast<U>(std::numeric_limits<T>::max())) {
+            value = static_cast<U>(std::numeric_limits<T>::max());
+        }
     }
     else if constexpr (std::is_unsigned_v<T> && std::is_signed_v<U> && sizeof(T) < sizeof(U)) {
-        static_assert(false, "Safe conversion not possible");
+        if (value < 0) {
+            value = 0;
+        }
+        else if (value > static_cast<U>(std::numeric_limits<T>::max())) {
+            value = static_cast<U>(std::numeric_limits<T>::max());
+        }
     }
     else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) == sizeof(U)) {
-        static_assert(false, "Safe conversion not possible");
+        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
+            value = static_cast<U>(std::numeric_limits<T>::max());
+        }
     }
     else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) > sizeof(U)) {
         // Always fit
     }
     else if constexpr (std::is_signed_v<T> && std::is_unsigned_v<U> && sizeof(T) < sizeof(U)) {
-        static_assert(false, "Safe conversion not possible");
+        if (value > static_cast<U>(std::numeric_limits<T>::max())) {
+            value = static_cast<U>(std::numeric_limits<T>::max());
+        }
     }
     else {
         static_assert(false);

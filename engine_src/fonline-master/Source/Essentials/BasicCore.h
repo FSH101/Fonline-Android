@@ -68,7 +68,6 @@
 #include <ctime>
 #include <deque>
 #include <filesystem>
-#include <format>
 #include <fstream>
 #include <functional>
 #include <future>
@@ -108,6 +107,14 @@
 // Custom hashmaps
 #include "ankerl/unordered_dense.h"
 #define FO_HASH_NAMESPACE ankerl::unordered_dense::
+
+#if defined(__ANDROID__)
+#include "fmt/format.h"
+namespace fo_fmt = fmt;
+#else
+#include <format>
+namespace fo_fmt = std;
+#endif
 
 // OS specific API
 #if FO_MAC || FO_IOS
@@ -232,12 +239,12 @@ public:
 FO_END_NAMESPACE();
 template<typename T>
     requires(std::is_same_v<T, FO_NAMESPACE string_view_nt>)
-struct std::formatter<T> : formatter<FO_NAMESPACE string_view> // NOLINT(cert-dcl58-cpp)
+struct fo_fmt::formatter<T> : fo_fmt::formatter<FO_NAMESPACE string_view> // NOLINT(cert-dcl58-cpp)
 {
     template<typename FormatContext>
     auto format(const T& value, FormatContext& ctx) const
     {
-        return formatter<FO_NAMESPACE string_view>::format(static_cast<FO_NAMESPACE string_view>(value), ctx);
+        return fo_fmt::formatter<FO_NAMESPACE string_view>::format(static_cast<FO_NAMESPACE string_view>(value), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();
@@ -425,12 +432,12 @@ constexpr auto CombineEnum(T first, Args... rest) noexcept -> T
 FO_END_NAMESPACE();
 template<typename T>
     requires(std::is_enum_v<T>)
-struct std::formatter<T> : formatter<std::underlying_type_t<T>> // NOLINT(cert-dcl58-cpp)
+struct fo_fmt::formatter<T> : fo_fmt::formatter<std::underlying_type_t<T>> // NOLINT(cert-dcl58-cpp)
 {
     template<typename FormatContext>
     auto format(const T& value, FormatContext& ctx) const
     {
-        return formatter<std::underlying_type_t<T>>::format(static_cast<std::underlying_type_t<T>>(value), ctx);
+        return fo_fmt::formatter<std::underlying_type_t<T>>::format(static_cast<std::underlying_type_t<T>>(value), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();
@@ -439,14 +446,14 @@ FO_BEGIN_NAMESPACE();
 #define FO_DECLARE_TYPE_FORMATTER(type, ...) \
     FO_END_NAMESPACE(); \
     template<> \
-    struct std::formatter<type> : formatter<FO_NAMESPACE string_view> \
+    struct fo_fmt::formatter<type> : fo_fmt::formatter<FO_NAMESPACE string_view> \
     { \
         template<typename FormatContext> \
         auto format(const type& value, FormatContext& ctx) const \
         { \
             FO_NAMESPACE string buf; \
-            std::format_to(std::back_inserter(buf), __VA_ARGS__); \
-            return formatter<FO_NAMESPACE string_view>::format(buf, ctx); \
+            fo_fmt::format_to(std::back_inserter(buf), __VA_ARGS__); \
+            return fo_fmt::formatter<FO_NAMESPACE string_view>::format(buf, ctx); \
         } \
     }; \
     FO_BEGIN_NAMESPACE()

@@ -85,12 +85,12 @@ class any_t : public string
 
 FO_END_NAMESPACE();
 template<>
-struct std::formatter<FO_NAMESPACE any_t> : formatter<FO_NAMESPACE string_view>
+struct fo_fmt::formatter<FO_NAMESPACE any_t> : fo_fmt::formatter<FO_NAMESPACE string_view>
 {
     template<typename FormatContext>
     auto format(const FO_NAMESPACE any_t& value, FormatContext& ctx) const
     {
-        return formatter<FO_NAMESPACE string_view>::format(static_cast<const FO_NAMESPACE string&>(value), ctx);
+        return fo_fmt::formatter<FO_NAMESPACE string_view>::format(static_cast<const FO_NAMESPACE string&>(value), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();
@@ -118,12 +118,12 @@ concept is_atomic = is_specialization<T, std::atomic>::value;
 FO_END_NAMESPACE();
 template<typename T>
     requires(FO_NAMESPACE is_atomic<T>)
-struct std::formatter<T> : formatter<decltype(std::declval<T>().load())> // NOLINT(cert-dcl58-cpp)
+struct fo_fmt::formatter<T> : fo_fmt::formatter<decltype(std::declval<T>().load())> // NOLINT(cert-dcl58-cpp)
 {
     template<typename FormatContext>
     auto format(const T& value, FormatContext& ctx) const
     {
-        return formatter<decltype(std::declval<T>().load())>::format(value.load(), ctx);
+        return fo_fmt::formatter<decltype(std::declval<T>().load())>::format(value.load(), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();
