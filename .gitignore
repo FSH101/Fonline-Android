@@ -1,20 +1,21 @@
 # Android / Gradle
 .gradle/
-build/
 **/build/
 local.properties
 *.iml
-
-# IDE
 .idea/
 .vscode/
 
-# Portable Git (чтобы не засорять репо)
-tools/PortableGit/
+# NDK / CMake caches
+**/.cxx/
+**/cmake-build*/
 
 # Logs
 *.log
 
-# OS
+# OS junk
 .DS_Store
 Thumbs.db
+
+# Portable Git (keep repo clean if present)
+tools/PortableGit/
