@@ -73,30 +73,29 @@ namespace detail
     template<typename...>
     inline constexpr bool dependent_false_v = false;
 
-    template<typename T>
-    struct numeric_base
+    template<typename T, bool IsEnum = std::is_enum_v<std::remove_cvref_t<T>>>
+    struct underlying_or_self
     {
         using type = std::remove_cvref_t<T>;
     };
 
     template<typename T>
-        requires std::is_enum_v<std::remove_cvref_t<T>>
-    struct numeric_base<T>
+    struct underlying_or_self<T, true>
     {
         using type = std::underlying_type_t<std::remove_cvref_t<T>>;
     };
 
     template<typename T>
-    using numeric_base_t = typename numeric_base<T>::type;
+    using underlying_or_self_t = typename underlying_or_self<T>::type;
 
     template<typename T>
-    concept numeric_like = std::is_arithmetic_v<numeric_base_t<T>>;
+    concept numeric_like = std::is_arithmetic_v<underlying_or_self_t<T>>;
 
     template<numeric_like T, numeric_like U>
     [[nodiscard]] constexpr auto cast_with_range(U value) -> T
     {
-        using To = numeric_base_t<T>;
-        using From = numeric_base_t<U>;
+        using To = underlying_or_self_t<T>;
+        using From = underlying_or_self_t<U>;
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
@@ -121,8 +120,8 @@ namespace detail
     template<numeric_like T, numeric_like U>
     [[nodiscard]] constexpr auto clamp_with_range(U value) noexcept -> T
     {
-        using To = numeric_base_t<T>;
-        using From = numeric_base_t<U>;
+        using To = underlying_or_self_t<T>;
+        using From = underlying_or_self_t<U>;
 
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 

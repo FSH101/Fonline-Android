@@ -146,6 +146,13 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             # header-only fmt fallback for Android builds
             "${ENGINE_DIR}/ThirdParty/fmt/include")
 
+    target_include_directories(native_bridge PRIVATE
+            "${ENGINE_DIR}/Source"
+            "${ENGINE_DIR}/Source/Common"
+            "${ENGINE_DIR}/Source/Frontend"
+            "${ENGINE_DIR}/Source/Frontend/Applications"
+            "${ENGINE_DIR}/Source/Generated")
+
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.
     target_compile_definitions(fonline_engine PUBLIC
