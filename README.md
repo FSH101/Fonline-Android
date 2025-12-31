@@ -52,7 +52,7 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - Platform fallbacks for `FO_HAVE_SPARK`, `FO_HAVE_ACM`, and `FO_ENABLE_SOUND` live in `Common/Common.h` so non-Android/Windows builds still get sensible defaults if the CMake definitions are absent.
 
 ### Fixes (Android/NDK build)
-- **Expected outcome:** NDK task `:app:buildCMakeDebug[arm64-v8a]` passes configure/generate and reaches compile without requesting missing headers (`SPARK.h`, `acmstrm.h`, `theora/theoradec.h`), then proceeds to the next compile/link stage.
+- **Expected outcome:** NDK task `:app:buildCMakeDebug[arm64-v8a]` passes configure/generate and reaches compile without re-requesting missing headers (`SPARK.h`, `acmstrm.h`, `theora/theoradec.h`) or the `FO_DEBUG` define, then proceeds to the next compile/link stage.
 - **Missing `SPARK.h` (`SparkExtension.h`/`VisualParticles.cpp`)**: Android builds define `FO_HAVE_SPARK=0` for both native targets, and Spark interfaces now pull a dedicated stub header (`Source/Client/Compat/SparkStubs.h`) instead of ever including `SPARK.h` when the feature is off. Public interfaces stay intact for future re-enablement.
 - **Missing `acmstrm.h` (SoundManager.cpp:38)**: Android builds no longer include the Windows-only ACM header; a dedicated stub lives in `Source/Client/Compat/AcmStrmStub.h` and activates when `FO_HAVE_ACM=0`/`FO_ANDROID=1`, while Windows continues to include the real header. Default file extensions also prefer `ogg` on platforms without ACM support.
 - **Missing `theora/theoradec.h` (VideoClip.cpp:36)**: Theora decoding is gated behind `FO_HAVE_THEORA`; Android defaults to `0` and now compiles a minimal stub implementation of `VideoClip` so missing Theora headers no longer stop the native build. Enable the flag and provide theora libs/headers to reintroduce playback.
@@ -68,6 +68,9 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - `Application.h` stub generation only triggers when the engine checkout is incomplete; on a full checkout the real header is used. If the stub is used, functionality will be minimal until the real implementation is available.
 - `android.suppressUnsupportedCompileSdk=35` mutes the AGP 8.4.x warning for `compileSdk=35`; remove it once the tooling version fully supports API 35.
 - Spark visual effects and audio playback are stubbed out on Android (`FO_HAVE_SPARK=0`, `FO_ENABLE_SOUND=0`, `FO_HAVE_ACM=0`); rebuild with these flags set to `1` only when the corresponding native dependencies are available.
+
+### Fix log (2025-06-24)
+- Applied the Android flag set (including `FO_GEOMETRY`) uniformly to both native targets in CMake and defaulted `FO_HAVE_SPARK` to `0` directly in `VisualParticles.cpp` so Spark headers never load when the feature is disabled. (`app/src/main/cpp/CMakeLists.txt`, `Source/Client/VisualParticles.cpp`)
 
 ### Fix log (2025-05-13)
 - Hardened `safe_numeric_cast` traits so only enum types instantiate `std::underlying_type`, avoiding Android/libc++ template failures while preserving Android's permissive clamp fallback (`Source/Essentials/SafeArithmetics.h`).

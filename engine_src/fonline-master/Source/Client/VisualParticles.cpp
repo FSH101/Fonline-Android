@@ -34,6 +34,10 @@
 #include "VisualParticles.h"
 #include "SparkExtension.h"
 
+#ifndef FO_HAVE_SPARK
+#    define FO_HAVE_SPARK 0
+#endif
+
 #if FO_HAVE_SPARK
 #    include "SPARK.h"
 #endif
