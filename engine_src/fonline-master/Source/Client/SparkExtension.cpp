@@ -34,6 +34,8 @@
 #include "SparkExtension.h"
 #include "VisualParticles.h"
 
+#if FO_HAVE_SPARK
+
 namespace SPK::FO
 {
     SparkRenderBuffer::SparkRenderBuffer(size_t vertices)
@@ -568,3 +570,10 @@ namespace SPK::FO
         descriptor.getAttribute("locked up vector")->setValue(upVector);
     }
 }
+
+#else
+
+// Spark is disabled for this build; no additional implementation is required because
+// the stubbed SparkExtension interface in the header already provides trivial methods.
+
+#endif

@@ -45,10 +45,17 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - **Diagnostics for template errors:** Android CMake adds `-ftemplate-backtrace-limit=0` and a small `-ferror-limit` so the first failing instantiation is visible when troubleshooting.
 - **How to build:** run `./gradlew clean :app:assembleDebug` (or `gradlew.bat` on Windows). ABIs listed in `abiFilters` (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) are wired for the native build.
 
+### Android build: feature flags / known disabled subsystems
+- `FO_DEBUG` is now provided as a compile definition for both the engine and JNI bridge (`app/src/main/cpp/CMakeLists.txt`). Debug builds set `FO_DEBUG=1`, Release builds set `FO_DEBUG=0`, and `Common/Common.h` supplies a defensive default when the define is missing.
+- Spark effects are disabled on Android through `FO_HAVE_SPARK=0`. `SparkExtension.*` and `VisualParticles.*` carry stubbed implementations that keep callers compiling without `SPARK.h` while preserving the public interface for future re-enablement.
+- Windows ACM audio and the general sound backend are disabled for Android via `FO_HAVE_ACM=0` and `FO_ENABLE_SOUND=0`. `SoundManager.cpp` now compiles lightweight stubs when sound is off; toggle these in `app/src/main/cpp/CMakeLists.txt` (per target) or override in `Common/Common.h`.
+- Platform fallbacks for `FO_HAVE_SPARK`, `FO_HAVE_ACM`, and `FO_ENABLE_SOUND` live in `Common/Common.h` so non-Android/Windows builds still get sensible defaults if the CMake definitions are absent.
+
 ### Known limitations / временные заглушки
 - Gradle distribution download is blocked in this container; verify on a Windows host or CI with network access to ensure there are no further C++/linker errors beyond the fixed include/trait issues.
 - `Application.h` stub generation only triggers when the engine checkout is incomplete; on a full checkout the real header is used. If the stub is used, functionality will be minimal until the real implementation is available.
 - `android.suppressUnsupportedCompileSdk=35` mutes the AGP 8.4.x warning for `compileSdk=35`; remove it once the tooling version fully supports API 35.
+- Spark visual effects and audio playback are stubbed out on Android (`FO_HAVE_SPARK=0`, `FO_ENABLE_SOUND=0`, `FO_HAVE_ACM=0`); rebuild with these flags set to `1` only when the corresponding native dependencies are available.
 
 ### Fix log (2025-05-13)
 - Hardened `safe_numeric_cast` traits so only enum types instantiate `std::underlying_type`, avoiding Android/libc++ template failures while preserving Android's permissive clamp fallback (`Source/Essentials/SafeArithmetics.h`).
@@ -57,6 +64,10 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - Added a relaxed float/integer conversion path on Android so `safe_numeric_cast` clamps instead of asserting in the native toolchain, keeping `short -> int` and similar widening conversions compiling under NDK libc++ (`Source/Essentials/SafeArithmetics.h`).
 - Propagated `FO_GEOMETRY` to every target via `add_compile_definitions` and added an `Application.h` availability check with a stub fallback to avoid missing-header failures in the native Android CMake configuration (`app/src/main/cpp/CMakeLists.txt`).
 - Silenced the AGP `compileSdk=35` warning during bring-up via `android.suppressUnsupportedCompileSdk=35` (`gradle.properties`).
+
+### Fix log (2025-05-22)
+- Added `FO_DEBUG` compile-time definitions for Debug/Release and a defensive fallback in `Common/Common.h` so `if constexpr (FO_DEBUG)` blocks compile on Android. (`app/src/main/cpp/CMakeLists.txt`, `Source/Common/Common.h`)
+- Introduced feature flags for Spark and audio subsystems (`FO_HAVE_SPARK=0`, `FO_HAVE_ACM=0`, `FO_ENABLE_SOUND=0`) with stub implementations for Spark rendering and SoundManager to keep Android builds progressing without `SPARK.h` or `acmstrm.h`. (`Source/Client/SparkExtension.*`, `Source/Client/VisualParticles.*`, `Source/Client/SoundManager.cpp`, `app/src/main/cpp/CMakeLists.txt`, `Source/Common/Common.h`)
 
 ### Fix log (2025-05-12)
 - Exposed `FO_GEOMETRY_MODE` in CMake and defined it for both the engine and JNI bridge to ensure `FO_GEOMETRY` is always supplied during Android builds.

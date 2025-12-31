@@ -180,14 +180,25 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     add_compile_definitions(FO_GEOMETRY=${FO_GEOMETRY_MODE})
 
     target_compile_definitions(fonline_engine PUBLIC
+            $<$<CONFIG:Debug>:FO_DEBUG=1>
+            $<$<NOT:$<CONFIG:Debug>>:FO_DEBUG=0>
             __ANDROID__=1
             ANDROID=1
             FO_ANDROID=1
             FO_WINDOWS=0
             FO_SAFE_ARITH_RELAXED=1
-            FO_HAVE_ASSIMP=0)
+            FO_HAVE_ASSIMP=0
+            FO_HAVE_SPARK=0
+            FO_HAVE_ACM=0
+            FO_ENABLE_SOUND=0)
 
-    target_compile_definitions(native_bridge PRIVATE FO_GEOMETRY=${FO_GEOMETRY_MODE})
+    target_compile_definitions(native_bridge PRIVATE
+            $<$<CONFIG:Debug>:FO_DEBUG=1>
+            $<$<NOT:$<CONFIG:Debug>>:FO_DEBUG=0>
+            FO_GEOMETRY=${FO_GEOMETRY_MODE}
+            FO_HAVE_SPARK=0
+            FO_HAVE_ACM=0
+            FO_ENABLE_SOUND=0)
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
     target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)

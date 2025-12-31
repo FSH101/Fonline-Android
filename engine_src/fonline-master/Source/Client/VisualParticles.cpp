@@ -34,7 +34,11 @@
 #include "VisualParticles.h"
 #include "SparkExtension.h"
 
-#include "SPARK.h"
+#if FO_HAVE_SPARK
+#    include "SPARK.h"
+#endif
+
+#if FO_HAVE_SPARK
 
 FO_BEGIN_NAMESPACE();
 
@@ -311,3 +315,93 @@ void ParticleSystem::Draw()
 }
 
 FO_END_NAMESPACE();
+
+#else
+
+FO_BEGIN_NAMESPACE();
+
+struct ParticleManager::Impl
+{
+};
+
+struct ParticleSystem::Impl
+{
+};
+
+ParticleManager::ParticleManager(RenderSettings& settings, EffectManager& effect_mngr, FileSystem& resources, GameTimer& game_time, TextureLoader tex_loader) :
+    _impl {SafeAlloc::MakeUnique<Impl>()},
+    _settings {&settings},
+    _effectMngr {&effect_mngr},
+    _resources {&resources},
+    _gameTime {&game_time},
+    _textureLoader {std::move(tex_loader)}
+{
+    ignore_unused(_settings, _effectMngr, _resources, _gameTime, _textureLoader);
+}
+
+ParticleManager::~ParticleManager() = default;
+
+auto ParticleManager::CreateParticle(string_view name) -> unique_ptr<ParticleSystem>
+{
+    ignore_unused(name);
+    return nullptr;
+}
+
+ParticleSystem::ParticleSystem(ParticleManager& particle_mngr) :
+    _impl {SafeAlloc::MakeUnique<Impl>()},
+    _particleMngr {&particle_mngr}
+{
+}
+
+ParticleSystem::~ParticleSystem() = default;
+
+auto ParticleSystem::IsActive() const -> bool
+{
+    return false;
+}
+
+auto ParticleSystem::GetElapsedTime() const -> float32
+{
+    return 0.0f;
+}
+
+auto ParticleSystem::GetBaseSystem() -> SPK::System*
+{
+    return nullptr;
+}
+
+auto ParticleSystem::GetDrawSize() const -> isize32
+{
+    return {};
+}
+
+auto ParticleSystem::NeedDraw() const -> bool
+{
+    return false;
+}
+
+void ParticleSystem::Setup(const mat44& proj, const mat44& world, const vec3& pos_offset, float32 look_dir_angle, const vec3& view_offset)
+{
+    ignore_unused(proj, world, pos_offset, look_dir_angle, view_offset);
+}
+
+void ParticleSystem::Prewarm()
+{
+}
+
+void ParticleSystem::Respawn()
+{
+}
+
+void ParticleSystem::Draw()
+{
+}
+
+void ParticleSystem::SetBaseSystem(SPK::System* system)
+{
+    ignore_unused(system);
+}
+
+FO_END_NAMESPACE();
+
+#endif

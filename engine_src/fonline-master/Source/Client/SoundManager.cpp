@@ -35,9 +35,13 @@
 #include "Application.h"
 #include "FileSystem.h"
 
-#include "acmstrm.h"
-#include "vorbis/codec.h"
-#include "vorbis/vorbisfile.h"
+#if FO_ENABLE_SOUND
+
+#    if FO_HAVE_ACM
+#        include "acmstrm.h"
+#    endif
+#    include "vorbis/codec.h"
+#    include "vorbis/vorbisfile.h"
 
 FO_BEGIN_NAMESPACE();
 
@@ -634,3 +638,38 @@ void SoundManager::StopMusic()
 }
 
 FO_END_NAMESPACE();
+
+#else
+
+FO_BEGIN_NAMESPACE();
+
+SoundManager::SoundManager(AudioSettings& settings, FileSystem& resources)
+{
+    ignore_unused(settings, resources);
+}
+
+SoundManager::~SoundManager() = default;
+
+auto SoundManager::PlaySound(const map<string, string>& sound_names, string_view name) -> bool
+{
+    ignore_unused(sound_names, name);
+    return false;
+}
+
+auto SoundManager::PlayMusic(string_view fname, timespan repeat_time) -> bool
+{
+    ignore_unused(fname, repeat_time);
+    return false;
+}
+
+void SoundManager::StopSounds()
+{
+}
+
+void SoundManager::StopMusic()
+{
+}
+
+FO_END_NAMESPACE();
+
+#endif

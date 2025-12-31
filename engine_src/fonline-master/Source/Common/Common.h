@@ -105,6 +105,38 @@ FO_END_NAMESPACE();
 #    endif
 #endif
 
+#ifndef FO_DEBUG
+#    ifdef NDEBUG
+#        define FO_DEBUG 0
+#    else
+#        define FO_DEBUG 1
+#    endif
+#endif
+
+#ifndef FO_HAVE_SPARK
+#    if defined(__ANDROID__)
+#        define FO_HAVE_SPARK 0
+#    else
+#        define FO_HAVE_SPARK 1
+#    endif
+#endif
+
+#ifndef FO_HAVE_ACM
+#    if defined(FO_WINDOWS) && FO_WINDOWS
+#        define FO_HAVE_ACM 1
+#    else
+#        define FO_HAVE_ACM 0
+#    endif
+#endif
+
+#ifndef FO_ENABLE_SOUND
+#    if defined(__ANDROID__)
+#        define FO_ENABLE_SOUND 0
+#    else
+#        define FO_ENABLE_SOUND 1
+#    endif
+#endif
+
 #ifndef FO_HAVE_ASSIMP
 #    if defined(__ANDROID__)
 #        define FO_HAVE_ASSIMP 0
