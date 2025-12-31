@@ -139,7 +139,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/Server"
             # ankerl::unordered_dense is now stored under ThirdParty/ankerl
             "${ENGINE_DIR}/ThirdParty"
-            "${ENGINE_DIR}/ThirdParty/ankerl")
+            "${ENGINE_DIR}/ThirdParty/ankerl/include")
 
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.

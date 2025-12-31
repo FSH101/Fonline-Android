@@ -1,14 +1,13 @@
 # Android / Gradle
 .gradle/
 **/build/
+**/.cxx/
+**/.externalNativeBuild/
+**/cmake-build*/
 local.properties
 *.iml
 .idea/
 .vscode/
-
-# NDK / CMake caches
-**/.cxx/
-**/cmake-build*/
 
 # Logs
 *.log

@@ -17,14 +17,14 @@ android {
 
         // NDK / ABI
         ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
 
         // Здесь ТОЛЬКО флаги/аргументы CMake, НЕ path.
         externalNativeBuild {
             cmake {
-                cppFlags += listOf("-std=c++20", "-frtti", "-fexceptions")
-                arguments += listOf("-DANDROID_STL=c++_shared")
+                cppFlags.addAll(listOf("-std=c++20", "-frtti", "-fexceptions"))
+                arguments.addAll(listOf("-DANDROID_STL=c++_shared"))
             }
         }
     }

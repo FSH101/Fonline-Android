@@ -17,6 +17,14 @@ On Windows use `gradlew.bat :app:assembleDebug` instead.
 
 The Gradle scripts already configure the external native build to use `app/src/main/cpp/CMakeLists.txt`. Engine sources are resolved under `engine_src/fonline-master` automatically; no manual path edits are required.
 
+## Если Gradle не скачивается из-за прокси/блокировок
+1. **Настроить `~/.gradle/gradle.properties`.**
+   - Создайте файл, либо скопируйте `gradle.properties.example` в домашний каталог и пропишите `systemProp.http.proxyHost`, `systemProp.http.proxyPort`, `systemProp.https.proxyHost`, `systemProp.https.proxyPort`. При необходимости добавьте `systemProp.*.proxyUser`/`proxyPassword` и `systemProp.http.nonProxyHosts`.
+2. **Использовать переменные окружения.**
+   - Перед запуском `./gradlew` выставьте `HTTP_PROXY`/`HTTPS_PROXY` (или нижним регистром) в виде `http://user:pass@host:port`.
+3. **Подложить дистрибутив вручную.**
+   - Скачайте ZIP для версии Gradle, указанной в `gradle/wrapper/gradle-wrapper.properties` (`gradle-8.6-bin.zip`), проверьте SHA-256 с [официальной страницы](https://gradle.org/releases/), затем положите архив в кеш `~/.gradle/wrapper/dists/gradle-8.6-bin/` (папку с именем-хешем создаёт сам Gradle). После этого `./gradlew` возьмёт локальный архив без выхода в интернет.
+
 ## Native sources layout
 - `app/src/main/cpp` — JNI bridge (`native_bridge.cpp`) and CMake entry point.
 - `engine_src/fonline-master` — FOnline engine checkout.
