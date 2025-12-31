@@ -152,6 +152,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             ANDROID=1
             FO_ANDROID=1
             FO_WINDOWS=0
+            FO_SAFE_ARITH_RELAXED=1
             FO_GEOMETRY=2
             FO_HAVE_ASSIMP=0)
 

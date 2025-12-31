@@ -100,7 +100,11 @@ FO_BEGIN_NAMESPACE();
 FO_END_NAMESPACE();
 
 #ifndef FO_HAVE_ASSIMP
-#define FO_HAVE_ASSIMP 1
+#    if defined(__ANDROID__)
+#        define FO_HAVE_ASSIMP 0
+#    else
+#        define FO_HAVE_ASSIMP 1
+#    endif
 #endif
 
 #if FO_HAVE_ASSIMP

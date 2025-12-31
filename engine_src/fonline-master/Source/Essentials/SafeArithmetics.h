@@ -60,6 +60,14 @@ template<typename T>
 FO_DECLARE_EXCEPTION(OverflowException);
 FO_DECLARE_EXCEPTION(DivisionByZeroException);
 
+#ifndef FO_SAFE_ARITH_RELAXED
+#    if defined(__ANDROID__)
+#        define FO_SAFE_ARITH_RELAXED 1
+#    else
+#        define FO_SAFE_ARITH_RELAXED 0
+#    endif
+#endif
+
 namespace detail
 {
     template<typename...>
@@ -78,7 +86,9 @@ namespace detail
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
         if constexpr (std::floating_point<To> || std::floating_point<From>) {
+#if !FO_SAFE_ARITH_RELAXED
             static_assert(std::floating_point<To>, "Use iround for float to int conversion");
+#endif
         }
 
         using Common = std::common_type_t<To, From>;
@@ -103,7 +113,9 @@ namespace detail
         static_assert(!std::same_as<To, bool> && !std::same_as<From, bool>, "Bool type is not convertible");
 
         if constexpr (std::floating_point<To> || std::floating_point<From>) {
+#if !FO_SAFE_ARITH_RELAXED
             static_assert(std::floating_point<To>, "Use iround for float to int conversion");
+#endif
         }
 
         using Common = std::common_type_t<To, From>;
@@ -149,7 +161,9 @@ template<typename T, typename U>
     static_assert(!std::same_as<T, bool> && !std::same_as<U, bool>, "Bool type is not convertible");
 
     if constexpr (std::floating_point<T> || std::floating_point<U>) {
+#if !FO_SAFE_ARITH_RELAXED
         static_assert(std::floating_point<T>, "Use iround for float to int conversion");
+#endif
     }
     else if constexpr (std::is_unsigned_v<T> && std::is_unsigned_v<U> && sizeof(T) >= sizeof(U)) {
         // Always fit
@@ -197,8 +211,8 @@ template<typename T, typename U>
         }
     }
     else {
-#if defined(__ANDROID__)
-        // Android NDK builds prefer a permissive fallback instead of halting
+#if FO_SAFE_ARITH_RELAXED
+        // Android builds prefer a permissive fallback instead of halting
         // the compilation on uncommon cross-signed conversions.
         value = static_cast<U>(static_cast<T>(value));
 #else
