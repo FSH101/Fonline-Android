@@ -35,6 +35,7 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - If you enable additional ABIs or change toolchain versions, keep them in sync with the values in `app/build.gradle.kts` to avoid mismatch errors.
 
 ## Fixes (codex/restore-proper-formatting-for-codes)
+- **Fix #1: safe_numeric_cast constraints / NDK underlying_type issue:** `safe_numeric_cast` no longer instantiates `std::underlying_type` unless the source or destination is an enum, keeping widening casts like `safe_numeric_cast<int>(short)` valid on libc++ and preserving the existing Android clamp-based fallback (`Source/Essentials/SafeArithmetics.h`).
 - **Formatting compatibility:** Added `FormatCompat.h` and routed engine headers to use `fo_fmt` (mapped to `{fmt}` on Android) instead of the incomplete NDK `<format>` implementation (`Source/Essentials/BasicCore.h`, `Source/Essentials/StringUtils.h`, `Source/Essentials/Containers.h`, `Source/Essentials/ExceptionHadling.h`). The bundled `{fmt}` now safely prints types that lack `operator<<` by falling back to `"<unformattable>"` instead of triggering a compile-time error (`ThirdParty/fmt/include/fmt/format.h`).
 - **Safe arithmetic on Android (updated):** numeric casting now uses an enum-aware `numeric_value` trait that only instantiates `std::underlying_type` for actual enums, preventing libc++ from rejecting `underlying_type<float>` and similar cases while keeping range checks in place (`Source/Essentials/SafeArithmetics.h`).
 - **Geometry mode:** Android CMake defines `FO_GEOMETRY=2` (square) via a configurable `FO_GEOMETRY_MODE` cache entry to satisfy the engine's required geometry switch (`app/src/main/cpp/CMakeLists.txt`), and `Common.h` provides the same default when `FO_GEOMETRY` is missing in Android builds.
@@ -46,8 +47,10 @@ The Gradle scripts already configure the external native build to use `app/src/m
 ### Known issues / next blockers
 - Gradle distribution download is blocked in this container; verify on a Windows host or CI with network access to ensure there are no further C++/linker errors beyond the fixed include/trait issues.
 
+### Fix log (2025-05-13)
+- Hardened `safe_numeric_cast` traits so only enum types instantiate `std::underlying_type`, avoiding Android/libc++ template failures while preserving Android's permissive clamp fallback (`Source/Essentials/SafeArithmetics.h`).
+
 ### Fix log (2025-05-12)
-- Hardened `safe_numeric_cast` traits so only enum types instantiate `std::underlying_type`, avoiding Android/libc++ template failures while preserving the existing range checks.
 - Exposed `FO_GEOMETRY_MODE` in CMake and defined it for both the engine and JNI bridge to ensure `FO_GEOMETRY` is always supplied during Android builds.
 
 ### Проверка обновления README
