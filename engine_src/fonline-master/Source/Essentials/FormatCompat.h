@@ -30,47 +30,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-
 #pragma once
 
-#include "BaseLogging.h"
-#include "BasicCore.h"
-#include "StringUtils.h"
-
-FO_BEGIN_NAMESPACE();
-
-using LogFunc = function<void(string_view)>;
-
-enum class LogType : uint8
-{
-    Info,
-    InfoSection,
-    Warning,
-    Error,
-};
-
-// Write formatted text
-extern void WriteLogMessage(LogType type, string_view message) noexcept;
-
-template<typename... Args>
-void WriteLog(fo_fmt::format_string<Args...>&& format, Args&&... args) noexcept
-{
-    WriteLogMessage(LogType::Info, strex(strex::safe_format, std::move(format), std::forward<Args>(args)...));
-}
-
-template<typename... Args>
-void WriteLog(LogType type, fo_fmt::format_string<Args...>&& format, Args&&... args) noexcept
-{
-    WriteLogMessage(type, strex(strex::safe_format, std::move(format), std::forward<Args>(args)...));
-}
-
-inline void WriteLog(string_view str) noexcept
-{
-    WriteLogMessage(LogType::Info, strex(strex::safe_format, "{}", str));
-}
-
-// Control
-extern void SetLogCallback(string_view key, LogFunc callback);
-extern void LogDisableTags();
-
-FO_END_NAMESPACE();
+#if defined(__ANDROID__)
+#include "fmt/format.h"
+namespace fo_fmt = fmt;
+#else
+#    if __has_include(<format>)
+#        include <format>
+namespace fo_fmt = std;
+#    else
+#        include "fmt/format.h"
+namespace fo_fmt = fmt;
+#    endif
+#endif

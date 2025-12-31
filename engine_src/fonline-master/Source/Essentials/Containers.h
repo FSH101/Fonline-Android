@@ -90,7 +90,7 @@ FO_BEGIN_NAMESPACE();
 FO_END_NAMESPACE();
 template<typename T>
     requires(FO_NAMESPACE is_vector_collection<T>)
-struct std::formatter<T> : formatter<FO_NAMESPACE string_view> // NOLINT(cert-dcl58-cpp)
+struct fo_fmt::formatter<T> : fo_fmt::formatter<FO_NAMESPACE string_view> // NOLINT(cert-dcl58-cpp)
 {
     template<typename FormatContext>
     auto format(const T& value, FormatContext& ctx) const
@@ -113,7 +113,7 @@ struct std::formatter<T> : formatter<FO_NAMESPACE string_view> // NOLINT(cert-dc
             result.pop_back();
         }
 
-        return formatter<FO_NAMESPACE string_view>::format(result, ctx);
+        return fo_fmt::formatter<FO_NAMESPACE string_view>::format(result, ctx);
     }
 };
 FO_BEGIN_NAMESPACE();

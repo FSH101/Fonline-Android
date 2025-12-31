@@ -99,7 +99,7 @@ public:
             _message.append(": ");
             _message.append(message);
 
-            const vector<string> params = {string(std::format("{}", std::forward<Args>(args)))...};
+            const vector<string> params = {string(fo_fmt::format("{}", std::forward<Args>(args)))...};
 
             for (const auto& param : params) {
                 _message.append("\n- ");

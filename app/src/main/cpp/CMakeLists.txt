@@ -137,20 +137,39 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/Common"
             "${ENGINE_DIR}/Source/Client"
             "${ENGINE_DIR}/Source/Server"
+            "${ENGINE_DIR}/Source/Frontend"
+            "${ENGINE_DIR}/Source/Frontend/Applications"
+            "${ENGINE_DIR}/Source/Generated"
             # ankerl::unordered_dense is now stored under ThirdParty/ankerl
             "${ENGINE_DIR}/ThirdParty"
-            "${ENGINE_DIR}/ThirdParty/ankerl")
+            "${ENGINE_DIR}/ThirdParty/ankerl/include"
+            # header-only fmt fallback for Android builds
+            "${ENGINE_DIR}/ThirdParty/fmt/include")
+
+    target_include_directories(native_bridge PRIVATE
+            "${ENGINE_DIR}/Source"
+            "${ENGINE_DIR}/Source/Common"
+            "${ENGINE_DIR}/Source/Frontend"
+            "${ENGINE_DIR}/Source/Frontend/Applications"
+            "${ENGINE_DIR}/Source/Generated")
 
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.
+    set(FO_GEOMETRY_MODE 2 CACHE STRING "FOnline geometry mode (1=hex, 2=square)")
+
     target_compile_definitions(fonline_engine PUBLIC
             __ANDROID__=1
             ANDROID=1
             FO_ANDROID=1
-            FO_WINDOWS=0)
+            FO_WINDOWS=0
+            FO_SAFE_ARITH_RELAXED=1
+            FO_GEOMETRY=${FO_GEOMETRY_MODE}
+            FO_HAVE_ASSIMP=0)
+
+    target_compile_definitions(native_bridge PRIVATE FO_GEOMETRY=${FO_GEOMETRY_MODE})
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
-    target_compile_options(fonline_engine PRIVATE -fexceptions -frtti)
+    target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)
 
     target_link_libraries(fonline_engine
             ${log-lib}

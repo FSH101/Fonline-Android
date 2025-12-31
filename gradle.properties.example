@@ -1,0 +1,15 @@
+# Copy this file to ~/.gradle/gradle.properties and adjust for your network.
+# Leave values empty if your proxy does not require authentication.
+
+systemProp.http.proxyHost=proxy.example.com
+systemProp.http.proxyPort=3128
+systemProp.http.proxyUser=
+systemProp.http.proxyPassword=
+
+systemProp.https.proxyHost=proxy.example.com
+systemProp.https.proxyPort=3128
+systemProp.https.proxyUser=
+systemProp.https.proxyPassword=
+
+# Bypass proxy for localhost if needed
+systemProp.http.nonProxyHosts=localhost|127.0.0.1

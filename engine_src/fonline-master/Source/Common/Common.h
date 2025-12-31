@@ -85,20 +85,40 @@ class any_t : public string
 
 FO_END_NAMESPACE();
 template<>
-struct std::formatter<FO_NAMESPACE any_t> : formatter<FO_NAMESPACE string_view>
+struct fo_fmt::formatter<FO_NAMESPACE any_t> : fo_fmt::formatter<FO_NAMESPACE string_view>
 {
     template<typename FormatContext>
     auto format(const FO_NAMESPACE any_t& value, FormatContext& ctx) const
     {
-        return formatter<FO_NAMESPACE string_view>::format(static_cast<const FO_NAMESPACE string&>(value), ctx);
+        return fo_fmt::formatter<FO_NAMESPACE string_view>::format(static_cast<const FO_NAMESPACE string&>(value), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();
 
 // 3d math types
-// Todo: replace depedency from Assimp types (matrix/vector/quaternion/color)
+// Todo: replace dependency from Assimp types (matrix/vector/quaternion/color)
 FO_END_NAMESPACE();
-#include "assimp/types.h"
+
+#ifndef FO_GEOMETRY
+#    if defined(__ANDROID__)
+#        define FO_GEOMETRY 2
+#    endif
+#endif
+
+#ifndef FO_HAVE_ASSIMP
+#    if defined(__ANDROID__)
+#        define FO_HAVE_ASSIMP 0
+#    else
+#        define FO_HAVE_ASSIMP 1
+#    endif
+#endif
+
+#if FO_HAVE_ASSIMP
+#    include "assimp/types.h"
+#else
+#    include "AssimpStubs.h"
+#endif
+
 FO_BEGIN_NAMESPACE();
 using vec3 = aiVector3t<float32>;
 using dvec3 = aiVector3t<float64>;
@@ -118,12 +138,12 @@ concept is_atomic = is_specialization<T, std::atomic>::value;
 FO_END_NAMESPACE();
 template<typename T>
     requires(FO_NAMESPACE is_atomic<T>)
-struct std::formatter<T> : formatter<decltype(std::declval<T>().load())> // NOLINT(cert-dcl58-cpp)
+struct fo_fmt::formatter<T> : fo_fmt::formatter<decltype(std::declval<T>().load())> // NOLINT(cert-dcl58-cpp)
 {
     template<typename FormatContext>
     auto format(const T& value, FormatContext& ctx) const
     {
-        return formatter<decltype(std::declval<T>().load())>::format(value.load(), ctx);
+        return fo_fmt::formatter<decltype(std::declval<T>().load())>::format(value.load(), ctx);
     }
 };
 FO_BEGIN_NAMESPACE();
