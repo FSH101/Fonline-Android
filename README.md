@@ -2,6 +2,8 @@
 
 Android wrapper for the FOnline engine that wires a small JNI bridge to the engine sources.
 
+Expected outcome: Android bring-up progresses: native build compiles & links; APK launches; logs show engine init loop.
+
 ## Prerequisites
 - Android Studio on Windows 10/11
 - Android SDK with **Android API 35**
@@ -29,6 +31,8 @@ The Gradle scripts already configure the external native build to use `app/src/m
 - `app/src/main/cpp` — JNI bridge (`native_bridge.cpp`) and CMake entry point.
 - `engine_src/fonline-master` — FOnline engine checkout.
 - Third-party headers (e.g., `ankerl/unordered_dense.h`) live under `engine_src/fonline-master/ThirdParty` and are included via CMake include paths.
+
+See `PORTING.md` for a condensed map of the client entrypoint, platform hooks, and rendering/audio feature flags targeted by the Android bring-up.
 
 ## Notes
 - `local.properties` is intentionally git-ignored; Android Studio will regenerate it with your local SDK/NDK paths.
@@ -71,6 +75,9 @@ The Gradle scripts already configure the external native build to use `app/src/m
 
 ### Fix log (2025-06-26)
 - Added a configurable CMake option `FO_ENABLE_THEORA` (default `OFF` for Android) that feeds `FO_HAVE_THEORA` to both native targets and backed it with a local default in `VideoClip.cpp`, keeping NDK builds from ever requesting `theora/theoradec.h` unless explicitly enabled. (`app/src/main/cpp/CMakeLists.txt`, `Source/Client/VideoClip.cpp`)
+
+### Fix log (2025-06-27)
+- Documented the client entry flow (`ClientApp` → `InitApp` → `MainEntry`/`FOClient::MainLoop`) and the SDL-driven platform/render/audio expectations to guide the Android platform layer work. (`PORTING.md`)
 
 ### Fix log (2025-06-24)
 - Applied the Android flag set (including `FO_GEOMETRY`) uniformly to both native targets in CMake and defaulted `FO_HAVE_SPARK` to `0` directly in `VisualParticles.cpp` so Spark headers never load when the feature is disabled. (`app/src/main/cpp/CMakeLists.txt`, `Source/Client/VisualParticles.cpp`)
