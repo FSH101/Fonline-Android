@@ -7,9 +7,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Our JNI / ANativeWindow bridge (already works).
-add_library(native_bridge SHARED
-        native_bridge.cpp)
+# Build SDL3 from the bundled third-party sources for Android
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_TEST OFF CACHE BOOL "" FORCE)
+
+# SDL-driven entrypoint + JNI helpers.
+add_library(main SHARED
+        native_bridge.cpp
+        sdl_main.cpp)
 
 # Android system libs
 find_library(log-lib log)
@@ -17,11 +23,12 @@ find_library(android-lib android)
 find_library(egl-lib EGL)
 find_library(glesv2-lib GLESv2)
 
-target_link_libraries(native_bridge
+target_link_libraries(main
         ${log-lib}
         ${android-lib}
         ${egl-lib}
-        ${glesv2-lib})
+        ${glesv2-lib}
+        SDL3::SDL3-static)
 
 # ============================================================
 # FOnline engine integration (first compile attempt)
@@ -31,7 +38,26 @@ target_link_libraries(native_bridge
 set(PROJ_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../..")
 set(ENGINE_DIR "${PROJ_ROOT}/engine_src/fonline-master")
 
+add_subdirectory("${ENGINE_DIR}/ThirdParty/SDL" "${CMAKE_CURRENT_BINARY_DIR}/sdl-build")
+
 option(FONLINE_WITH_ENGINE "Try to build FOnline engine sources" ON)
+option(FO_ENABLE_SCRIPTING "Enable AngelScript scripting" OFF)
+
+set(_DEFAULT_BUILD_SERVER ON)
+set(_DEFAULT_BUILD_EDITOR ON)
+set(_DEFAULT_BUILD_BAKER ON)
+set(_DEFAULT_BUILD_TESTING_APP ON)
+if(ANDROID)
+    set(_DEFAULT_BUILD_SERVER OFF)
+    set(_DEFAULT_BUILD_EDITOR OFF)
+    set(_DEFAULT_BUILD_BAKER OFF)
+    set(_DEFAULT_BUILD_TESTING_APP OFF)
+endif()
+
+option(FO_BUILD_SERVER "Build server-side applications" ${_DEFAULT_BUILD_SERVER})
+option(FO_BUILD_EDITOR "Build editor applications" ${_DEFAULT_BUILD_EDITOR})
+option(FO_BUILD_BAKER "Build baker tooling applications" ${_DEFAULT_BUILD_BAKER})
+option(FO_BUILD_TESTING_APP "Build testing applications" ${_DEFAULT_BUILD_TESTING_APP})
 
 if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     message(STATUS "FOnline engine found at: ${ENGINE_DIR}")
@@ -43,12 +69,48 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/*.cxx")
 
     # Drop things we definitely do NOT want in an Android lib build.
-    list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Tests?/")         # Test / Tests
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Tools?/")         # Tool / Tools
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/ThirdParty/")            # If Source accidentally includes it
-    list(FILTER ENGINE_SRC EXCLUDE REGEX "Rendering-Direct3D\.cpp$")
-    list(FILTER ENGINE_SRC EXCLUDE REGEX "WinApi-.*\.cpp$")
+    list(FILTER ENGINE_SRC EXCLUDE REGEX "Rendering-Direct3D\\.cpp$")
+    list(FILTER ENGINE_SRC EXCLUDE REGEX "WinApi-.*\\.cpp$")
+
+    if(NOT FO_BUILD_SERVER)
+        # Android bring-up: server binaries and DB dependencies are not built
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Server.*\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server(/|\\\\)")
+    endif()
+
+    if(NOT FO_BUILD_EDITOR)
+        # Android bring-up: editor/UI layers depend on ImGui/Editor headers not present here
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Editor.*\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Editor(/|\\\\)")
+    endif()
+
+    if(NOT FO_BUILD_BAKER)
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Baker.*\\.cpp$")
+    endif()
+
+    if(NOT FO_BUILD_TESTING_APP)
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/TestingApp\\.cpp$")
+    endif()
+
+    if(ANDROID)
+        # Android bring-up: ImGui/libbson not available, skip desktop/front-end and server DB entrypoints
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Frontend/Application\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server/DataBase\\.cpp$")
+        # Android bring-up: server is not built on this platform
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server(/|\\\\)")
+        # Android bring-up: exclude desktop entrypoints relying on ImGui/editor tooling
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/MapperApp\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/ServerApp\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/BakerApp\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/TestingApp\\.cpp$")
+    endif()
+
+    if(NOT FO_ENABLE_SCRIPTING)
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Scripting/")
+    endif()
 
     add_library(fonline_engine STATIC ${ENGINE_SRC})
 
@@ -132,26 +194,48 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     # Many headers use bare includes like: #include "Common.h"
     # In FOnline sources, Common.h lives in Source/Common/Common.h,
     # so we MUST add Source/Common to include dirs (and a few other common roots).
-    target_include_directories(fonline_engine PUBLIC
-            "${ENGINE_DIR}/Source"
-            "${ENGINE_DIR}/Source/Common"
-            "${ENGINE_DIR}/Source/Client"
-            "${ENGINE_DIR}/Source/Server"
-            "${ENGINE_DIR}/Source/Frontend"
-            "${ENGINE_DIR}/Source/Frontend/Applications"
-            "${ENGINE_DIR}/Source/Generated"
-            # ankerl::unordered_dense is now stored under ThirdParty/ankerl
-            "${ENGINE_DIR}/ThirdParty"
-            "${ENGINE_DIR}/ThirdParty/ankerl/include"
-            # header-only fmt fallback for Android builds
-            "${ENGINE_DIR}/ThirdParty/fmt/include")
+    if(ANDROID)
+        target_include_directories(fonline_engine PUBLIC
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Client"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated"
+                # ankerl::unordered_dense is now stored under ThirdParty/ankerl
+                "${ENGINE_DIR}/ThirdParty"
+                "${ENGINE_DIR}/ThirdParty/ankerl/include"
+                # header-only fmt fallback for Android builds
+                "${ENGINE_DIR}/ThirdParty/fmt/include")
 
-    target_include_directories(native_bridge PRIVATE
-            "${ENGINE_DIR}/Source"
-            "${ENGINE_DIR}/Source/Common"
-            "${ENGINE_DIR}/Source/Frontend"
-            "${ENGINE_DIR}/Source/Frontend/Applications"
-            "${ENGINE_DIR}/Source/Generated")
+        target_include_directories(main PRIVATE
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated")
+    else()
+        target_include_directories(fonline_engine PUBLIC
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Client"
+                "${ENGINE_DIR}/Source/Server"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated"
+                # ankerl::unordered_dense is now stored under ThirdParty/ankerl
+                "${ENGINE_DIR}/ThirdParty"
+                "${ENGINE_DIR}/ThirdParty/ankerl/include"
+                # header-only fmt fallback for Android builds
+                "${ENGINE_DIR}/ThirdParty/fmt/include")
+
+        target_include_directories(main PRIVATE
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated")
+    endif()
 
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.
@@ -175,7 +259,7 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
         endif()
         message(WARNING "Application.h missing under engine sources; using generated stub at ${_APP_STUB}")
         target_include_directories(fonline_engine PUBLIC "${_APP_STUB_DIR}")
-        target_include_directories(native_bridge PRIVATE "${_APP_STUB_DIR}")
+        target_include_directories(main PRIVATE "${_APP_STUB_DIR}")
     endif()
 
     set(ANDROID_ENGINE_COMMON_DEFS
@@ -189,13 +273,15 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             FO_HAVE_ASSIMP=0
             FO_HAVE_SPARK=0
             FO_HAVE_ACM=0
-            FO_HAVE_THEORA=$<BOOL:${FO_ENABLE_THEORA}>
+            FO_HAVE_THEORA=0
             FO_ENABLE_SOUND=0
-            FO_GEOMETRY=${FO_GEOMETRY_MODE})
+            FO_ENABLE_SCRIPTING=$<BOOL:${FO_ENABLE_SCRIPTING}>
+            FO_GEOMETRY=${FO_GEOMETRY_MODE}
+            SDL_MAIN_HANDLED=1)
 
     target_compile_definitions(fonline_engine PUBLIC ${ANDROID_ENGINE_COMMON_DEFS})
 
-    target_compile_definitions(native_bridge PRIVATE ${ANDROID_ENGINE_COMMON_DEFS})
+    target_compile_definitions(main PRIVATE ${ANDROID_ENGINE_COMMON_DEFS})
 
     # Many engines assume exceptions/RTTI in the core; keep them on for now.
     target_compile_options(fonline_engine PRIVATE -fexceptions -frtti -ftemplate-backtrace-limit=0 -ferror-limit=5)
@@ -204,12 +290,13 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             ${log-lib}
             ${android-lib}
             ${egl-lib}
-            ${glesv2-lib})
+            ${glesv2-lib}
+            SDL3::SDL3-static)
 
     # Link engine into our JNI bridge so it ends up in the .apk.
-    target_link_libraries(native_bridge fonline_engine)
+    target_link_libraries(main fonline_engine)
 
-    target_compile_definitions(native_bridge PRIVATE FONLINE_ENGINE_PRESENT=1)
+    target_compile_definitions(main PRIVATE FONLINE_ENGINE_PRESENT=1)
 else()
     message(STATUS "FOnline engine not built (missing sources or FONLINE_WITH_ENGINE=OFF).")
 endif()

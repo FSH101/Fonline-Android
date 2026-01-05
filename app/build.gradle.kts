@@ -6,18 +6,19 @@ plugins {
 
 android {
     namespace = "com.example.fonline"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.fonline"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "0.1"
 
         // NDK / ABI
         ndk {
-            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a")
         }
 
         // Здесь ТОЛЬКО флаги/аргументы CMake, НЕ path.
@@ -57,6 +58,10 @@ android {
     buildTypes {
         debug {
             isJniDebuggable = true
+            ndk {
+                abiFilters.clear()
+                abiFilters.add("arm64-v8a")
+            }
         }
         release {
             isMinifyEnabled = false

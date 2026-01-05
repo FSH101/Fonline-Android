@@ -1,8 +1,10 @@
 # Android / Gradle
 .gradle/
 **/build/
-**/.cxx/
 **/.externalNativeBuild/
+**/.cxx/
+/app/.cxx/
+/.cxx/
 **/cmake-build*/
 local.properties
 *.iml

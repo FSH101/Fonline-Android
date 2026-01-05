@@ -12,3 +12,15 @@
 
 inline constexpr int FO_PROTO_VERSION = 0;
 inline constexpr int FO_COMPATIBILITY_VERSION = 0;
+
+#ifndef FO_NICE_NAME
+#define FO_NICE_NAME "FOnline"
+#endif
+
+#ifndef FO_DEV_NAME
+#define FO_DEV_NAME "Cvet"
+#endif
+
+#ifndef FO_MAIN_CONFIG
+#define FO_MAIN_CONFIG "FOEngine.cfg"
+#endif
