@@ -43,6 +43,16 @@ add_subdirectory("${ENGINE_DIR}/ThirdParty/SDL" "${CMAKE_CURRENT_BINARY_DIR}/sdl
 option(FONLINE_WITH_ENGINE "Try to build FOnline engine sources" ON)
 option(FO_ENABLE_SCRIPTING "Enable AngelScript scripting" OFF)
 
+set(_DEFAULT_BUILD_SERVER ON)
+set(_DEFAULT_BUILD_EDITOR ON)
+if(ANDROID)
+    set(_DEFAULT_BUILD_SERVER OFF)
+    set(_DEFAULT_BUILD_EDITOR OFF)
+endif()
+
+option(FO_BUILD_SERVER "Build server-side applications" ${_DEFAULT_BUILD_SERVER})
+option(FO_BUILD_EDITOR "Build editor applications" ${_DEFAULT_BUILD_EDITOR})
+
 if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     message(STATUS "FOnline engine found at: ${ENGINE_DIR}")
 
@@ -58,6 +68,18 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/ThirdParty/")            # If Source accidentally includes it
     list(FILTER ENGINE_SRC EXCLUDE REGEX "Rendering-Direct3D\\.cpp$")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "WinApi-.*\\.cpp$")
+
+    if(NOT FO_BUILD_SERVER)
+        # Android bring-up: server binaries and DB dependencies are not built
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Server.*\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server(/|\\\\)")
+    endif()
+
+    if(NOT FO_BUILD_EDITOR)
+        # Android bring-up: editor/UI layers depend on ImGui/Editor headers not present here
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Editor.*\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Editor(/|\\\\)")
+    endif()
 
     if(ANDROID)
         # Android bring-up: ImGui/libbson not available, skip desktop/front-end and server DB entrypoints

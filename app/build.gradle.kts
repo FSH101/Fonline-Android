@@ -17,7 +17,8 @@ android {
 
         // NDK / ABI
         ndk {
-            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a")
         }
 
         // Здесь ТОЛЬКО флаги/аргументы CMake, НЕ path.

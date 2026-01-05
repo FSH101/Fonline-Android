@@ -6,7 +6,7 @@ Expected outcome: Android bring-up progresses: native build compiles & links; AP
 
 ## Prerequisites
 - Android Studio on Windows 10/11
-- Android SDK with **Android API 35**
+- Android SDK with **Android API 34** (install "Android SDK Platform 34" via SDK Manager)
 - **NDK 26.3.11579264** (matching the version pinned in `app/build.gradle.kts`)
 - CMake **3.22.1** (installed via Android Studio's SDK Manager)
 
