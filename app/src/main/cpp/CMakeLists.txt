@@ -87,6 +87,9 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server/DataBase\\.cpp$")
         # Android bring-up: server is not built on this platform
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server(/|\\\\)")
+        # Android bring-up: exclude desktop entrypoints relying on ImGui/editor tooling
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/MapperApp\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/ServerApp\\.cpp$")
     endif()
 
     if(NOT FO_ENABLE_SCRIPTING)
