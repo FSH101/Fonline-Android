@@ -53,7 +53,6 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
             "${ENGINE_DIR}/Source/*.cxx")
 
     # Drop things we definitely do NOT want in an Android lib build.
-    list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Tests?/")         # Test / Tests
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Tools?/")         # Tool / Tools
     list(FILTER ENGINE_SRC EXCLUDE REGEX "/ThirdParty/")            # If Source accidentally includes it
