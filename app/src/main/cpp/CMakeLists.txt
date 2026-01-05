@@ -63,6 +63,8 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
         # Android bring-up: ImGui/libbson not available, skip desktop/front-end and server DB entrypoints
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Frontend/Application\\.cpp$")
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server/DataBase\\.cpp$")
+        # Android bring-up: server is not built on this platform
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server(/|\\\\)")
     endif()
 
     if(NOT FO_ENABLE_SCRIPTING)
@@ -151,26 +153,48 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     # Many headers use bare includes like: #include "Common.h"
     # In FOnline sources, Common.h lives in Source/Common/Common.h,
     # so we MUST add Source/Common to include dirs (and a few other common roots).
-    target_include_directories(fonline_engine PUBLIC
-            "${ENGINE_DIR}/Source"
-            "${ENGINE_DIR}/Source/Common"
-            "${ENGINE_DIR}/Source/Client"
-            "${ENGINE_DIR}/Source/Server"
-            "${ENGINE_DIR}/Source/Frontend"
-            "${ENGINE_DIR}/Source/Frontend/Applications"
-            "${ENGINE_DIR}/Source/Generated"
-            # ankerl::unordered_dense is now stored under ThirdParty/ankerl
-            "${ENGINE_DIR}/ThirdParty"
-            "${ENGINE_DIR}/ThirdParty/ankerl/include"
-            # header-only fmt fallback for Android builds
-            "${ENGINE_DIR}/ThirdParty/fmt/include")
+    if(ANDROID)
+        target_include_directories(fonline_engine PUBLIC
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Client"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated"
+                # ankerl::unordered_dense is now stored under ThirdParty/ankerl
+                "${ENGINE_DIR}/ThirdParty"
+                "${ENGINE_DIR}/ThirdParty/ankerl/include"
+                # header-only fmt fallback for Android builds
+                "${ENGINE_DIR}/ThirdParty/fmt/include")
 
-    target_include_directories(main PRIVATE
-            "${ENGINE_DIR}/Source"
-            "${ENGINE_DIR}/Source/Common"
-            "${ENGINE_DIR}/Source/Frontend"
-            "${ENGINE_DIR}/Source/Frontend/Applications"
-            "${ENGINE_DIR}/Source/Generated")
+        target_include_directories(main PRIVATE
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated")
+    else()
+        target_include_directories(fonline_engine PUBLIC
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Client"
+                "${ENGINE_DIR}/Source/Server"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated"
+                # ankerl::unordered_dense is now stored under ThirdParty/ankerl
+                "${ENGINE_DIR}/ThirdParty"
+                "${ENGINE_DIR}/ThirdParty/ankerl/include"
+                # header-only fmt fallback for Android builds
+                "${ENGINE_DIR}/ThirdParty/fmt/include")
+
+        target_include_directories(main PRIVATE
+                "${ENGINE_DIR}/Source"
+                "${ENGINE_DIR}/Source/Common"
+                "${ENGINE_DIR}/Source/Frontend"
+                "${ENGINE_DIR}/Source/Frontend/Applications"
+                "${ENGINE_DIR}/Source/Generated")
+    endif()
 
     # These defs are guesses — they are here to help you quickly see
     # what breaks first. We'll adjust after the first compiler error batch.
