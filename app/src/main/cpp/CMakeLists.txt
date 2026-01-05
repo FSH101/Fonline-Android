@@ -45,13 +45,19 @@ option(FO_ENABLE_SCRIPTING "Enable AngelScript scripting" OFF)
 
 set(_DEFAULT_BUILD_SERVER ON)
 set(_DEFAULT_BUILD_EDITOR ON)
+set(_DEFAULT_BUILD_BAKER ON)
+set(_DEFAULT_BUILD_TESTING_APP ON)
 if(ANDROID)
     set(_DEFAULT_BUILD_SERVER OFF)
     set(_DEFAULT_BUILD_EDITOR OFF)
+    set(_DEFAULT_BUILD_BAKER OFF)
+    set(_DEFAULT_BUILD_TESTING_APP OFF)
 endif()
 
 option(FO_BUILD_SERVER "Build server-side applications" ${_DEFAULT_BUILD_SERVER})
 option(FO_BUILD_EDITOR "Build editor applications" ${_DEFAULT_BUILD_EDITOR})
+option(FO_BUILD_BAKER "Build baker tooling applications" ${_DEFAULT_BUILD_BAKER})
+option(FO_BUILD_TESTING_APP "Build testing applications" ${_DEFAULT_BUILD_TESTING_APP})
 
 if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     message(STATUS "FOnline engine found at: ${ENGINE_DIR}")
@@ -79,6 +85,14 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
         # Android bring-up: editor/UI layers depend on ImGui/Editor headers not present here
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Editor.*\\.cpp$")
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Editor(/|\\\\)")
+    endif()
+
+    if(NOT FO_BUILD_BAKER)
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/Baker.*\\.cpp$")
+    endif()
+
+    if(NOT FO_BUILD_TESTING_APP)
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/TestingApp\\.cpp$")
     endif()
 
     if(ANDROID)
