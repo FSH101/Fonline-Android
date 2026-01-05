@@ -60,6 +60,12 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "Rendering-Direct3D\\.cpp$")
     list(FILTER ENGINE_SRC EXCLUDE REGEX "WinApi-.*\\.cpp$")
 
+    if(ANDROID)
+        # Android bring-up: ImGui/libbson not available, skip desktop/front-end and server DB entrypoints
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Frontend/Application\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Server/DataBase\\.cpp$")
+    endif()
+
     if(NOT FO_ENABLE_SCRIPTING)
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Scripting/")
     endif()
