@@ -90,6 +90,8 @@ if(FONLINE_WITH_ENGINE AND EXISTS "${ENGINE_DIR}/Source")
         # Android bring-up: exclude desktop entrypoints relying on ImGui/editor tooling
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/MapperApp\\.cpp$")
         list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/ServerApp\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/BakerApp\\.cpp$")
+        list(FILTER ENGINE_SRC EXCLUDE REGEX "/Source/Applications/TestingApp\\.cpp$")
     endif()
 
     if(NOT FO_ENABLE_SCRIPTING)

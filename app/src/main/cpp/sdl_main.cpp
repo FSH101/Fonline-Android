@@ -22,7 +22,7 @@ int SDL_main(int argc, char** argv)
 
     SDL_SetMainReady();
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         SDL_Log("[FONLINE] SDL_Init failed: %s", SDL_GetError());
         return -1;
     }
@@ -39,8 +39,7 @@ int SDL_main(int argc, char** argv)
 
     SDL_Log("[FONLINE] SDL window created");
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
     if (!renderer) {
         SDL_Log("[FONLINE] SDL_CreateRenderer failed: %s", SDL_GetError());
         SDL_DestroyWindow(window);
